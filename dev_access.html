@@ -199,6 +199,39 @@
         </form>
       </section>
 
+      <!-- Shift Times Configuration -->
+      <section style="margin-bottom: 30px; padding: 16px; border: 1px dashed var(--line); border-radius: 8px;">
+        <h3 style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 16px;">Configure Shift Check-in Times</h3>
+        
+        <form id="shiftTimesForm">
+          <p style="font-size: 0.8rem; font-weight: 600; color: var(--text); margin-bottom: 8px;">Morning Shift Bounds</p>
+          <div class="input-grid" style="margin-bottom: 12px;">
+            <label class="login-label" style="display: block; margin: 0;">
+              <span>Opening Time</span>
+              <input type="time" id="morningStartInput" required style="width: 100%; margin: 0;">
+            </label>
+            <label class="login-label" style="display: block; margin: 0;">
+              <span>Closing Time</span>
+              <input type="time" id="morningEndInput" required style="width: 100%; margin: 0;">
+            </label>
+          </div>
+
+          <p style="font-size: 0.8rem; font-weight: 600; color: var(--text); margin-bottom: 8px;">Afternoon Shift Bounds</p>
+          <div class="input-grid" style="margin-bottom: 16px;">
+            <label class="login-label" style="display: block; margin: 0;">
+              <span>Opening Time</span>
+              <input type="time" id="afternoonStartInput" required style="width: 100%; margin: 0;">
+            </label>
+            <label class="login-label" style="display: block; margin: 0;">
+              <span>Closing Time</span>
+              <input type="time" id="afternoonEndInput" required style="width: 100%; margin: 0;">
+            </label>
+          </div>
+          
+          <button class="primary-btn" type="submit" style="width: 100%;">Save Shift Times</button>
+        </form>
+      </section>
+
       <!-- Configured Classes List -->
       <section style="margin-bottom: 24px;">
         <h3 style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 12px;">Configured Classes</h3>
@@ -282,6 +315,7 @@
       document.getElementById('devLoginCard').classList.add('hidden');
       document.getElementById('devDashboard').classList.remove('hidden');
       await fetchConfiguredClasses();
+      await fetchShiftTimes();
     }
 
     window.logoutDev = function() {
@@ -438,6 +472,49 @@
         }
       } catch (err) {
         alert("Failed to connect to backend server.");
+      }
+    });
+
+    async function fetchShiftTimes() {
+      try {
+        const res = await fetch('/api/shifts');
+        if (res.ok) {
+          const shifts = await res.json();
+          document.getElementById('morningStartInput').value = shifts.morningStart;
+          document.getElementById('morningEndInput').value = shifts.morningEnd;
+          document.getElementById('afternoonStartInput').value = shifts.afternoonStart;
+          document.getElementById('afternoonEndInput').value = shifts.afternoonEnd;
+        }
+      } catch (err) {
+        console.error("Failed to load shift times:", err);
+      }
+    }
+
+    document.getElementById('shiftTimesForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const token = sessionStorage.getItem('devToken');
+      const morningStart = document.getElementById('morningStartInput').value;
+      const morningEnd = document.getElementById('morningEndInput').value;
+      const afternoonStart = document.getElementById('afternoonStartInput').value;
+      const afternoonEnd = document.getElementById('afternoonEndInput').value;
+
+      try {
+        const res = await fetch('/api/shifts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ morningStart, morningEnd, afternoonStart, afternoonEnd })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert('Shift times successfully saved!');
+        } else {
+          alert(data.message || 'Failed to update shift times.');
+        }
+      } catch (err) {
+        alert('Server connection error. Failed to save shift times.');
       }
     });
 
