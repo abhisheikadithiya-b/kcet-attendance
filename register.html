@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Student | KCET Smart Campus</title>
+  <meta name="description" content="Register new student faces for attendance tracking.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script defer src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script defer src="assets/js/app.js"></script>
+  <script>
+    // Admin route protection
+    if (sessionStorage.getItem('isAdmin') !== 'true') {
+      window.location.replace('admin_login.html');
+    }
+    
+    function logoutAdmin() {
+      sessionStorage.removeItem('isAdmin');
+      sessionStorage.removeItem('adminClass');
+      window.location.href = 'index.html';
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const clsInput = document.getElementById("regYear");
+      const savedClass = sessionStorage.getItem("adminClass");
+      if (clsInput && savedClass) {
+        clsInput.value = savedClass;
+      }
+    });
+  </script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar glass">
+      <a class="brand" href="index.html" aria-label="Go to dashboard">
+        <span class="brand-logo logo-image">
+          <img src="https://www.kamarajengg.edu.in/static/home/favicon.png" alt="KCET logo">
+        </span>
+        <span>
+          <strong id="collegeName">Kamaraj College of Engineering & Technology</strong>
+          <small>Smart Campus Student Attendance</small>
+        </span>
+      </a>
+
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="index.html">Dashboard</a>
+        <a href="index.html#attendance">Live Scan</a>
+        <a href="#records">Records</a>
+      </nav>
+
+      <div class="top-actions">
+        <div class="status-chip" id="topStatus">
+          <span></span>
+          <strong>Admin Mode</strong>
+        </div>
+        <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle dark mode">
+          <span class="sun">☼</span>
+          <span class="moon">⏾</span>
+        </button>
+        <button class="secondary-btn" style="padding: 6px 12px; font-size: 0.85rem;" onclick="logoutAdmin()">Log Out</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Face Registration Panel -->
+      <section class="section-pad split-section" id="registration">
+        <div class="section-heading" data-aos="fade">
+          <p class="eyebrow">Biometric Registry</p>
+          <h2>Register student faces</h2>
+        </div>
+
+        <div class="registration-layout">
+          <div class="registration-card glass" data-aos="fade">
+            <label>
+              <span>Student Full Name</span>
+              <input id="regName" type="text" placeholder="Example: Aravind Swamy">
+            </label>
+            <label>
+              <span>Student ID / Roll No</span>
+              <input id="regStudentId" type="text" placeholder="Example: CS-2023-01">
+            </label>
+            <label>
+              <span>Department</span>
+              <select id="regDept">
+                <option>Computer Science</option>
+                <option>Information Technology</option>
+                <option>Electronics</option>
+                <option>Mechanical</option>
+                <option>Civil</option>
+                <option>Chemical</option>
+              </select>
+            </label>
+            <label>
+              <span>Class</span>
+              <input type="text" id="regYear" placeholder="Example: a1, a2, a3" required autocomplete="off" readonly>
+            </label>
+            <div class="button-row">
+              <button class="primary-btn" id="captureFaceBtn" type="button">Capture Angle</button>
+              <button class="secondary-btn" id="saveFaceBtn" type="button" disabled>Save Student Face</button>
+            </div>
+            <p class="helper-text" style="font-size: 0.75rem; margin-top: 14px;">Descriptors are synced locally in sandbox storage.</p>
+          </div>
+
+          <!-- Capture guidance and camera viewfinder -->
+          <div class="capture-guide glass" data-aos="fade">
+            <div class="alignment-helper" id="regCameraFrame">
+              <video id="regVideo" autoplay muted playsinline></video>
+              <canvas id="regOverlayCanvas"></canvas>
+              <div class="face-guide"></div>
+              <div class="camera-placeholder" id="regCameraPlaceholder">
+                <strong>Registration Viewfinder</strong>
+                <small>Webcam capture stream will render here</small>
+              </div>
+            </div>
+            <ol>
+              <li class="active">Face directly towards camera</li>
+              <li>Rotate head slightly left</li>
+              <li>Rotate head slightly right</li>
+              <li>Verify visual capture quality</li>
+            </ol>
+            <div class="capture-count"><strong id="captureCount">0</strong>/3 angles recorded</div>
+
+            <!-- Thumbnail slots for snapped views -->
+            <div class="captured-angles-preview" id="regThumbsContainer">
+              <div class="thumb-slot" id="thumbSlot1">
+                <span class="thumb-label">Angle 1</span>
+                <div class="thumb-placeholder">Awaiting snap</div>
+              </div>
+              <div class="thumb-slot" id="thumbSlot2">
+                <span class="thumb-label">Angle 2</span>
+                <div class="thumb-placeholder">Awaiting snap</div>
+              </div>
+              <div class="thumb-slot" id="thumbSlot3">
+                <span class="thumb-label">Angle 3</span>
+                <div class="thumb-placeholder">Awaiting snap</div>
+              </div>
+            </div>
+
+            <!-- Validation options -->
+            <div class="approval-controls hidden" id="approvalControls">
+              <p class="approval-text">Do these captures look clear?</p>
+              <div class="button-row">
+                <button class="primary-btn" id="approveCapturesBtn" type="button">Approve & Continue</button>
+                <button class="secondary-btn" id="retryCapturesBtn" type="button">Discard & Retry</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- History Table records management -->
+      <section class="section-pad" id="records">
+        <div class="section-heading" data-aos="fade">
+          <p class="eyebrow">System Archive</p>
+          <h2>Student attendance history</h2>
+        </div>
+
+        <div class="records-toolbar glass" data-aos="fade">
+          <input id="searchInput" type="search" placeholder="Search by name, ID/Roll number, class, or department">
+          <div>
+            <label style="font-size: 0.75rem; color: var(--muted); font-weight: 600; text-transform: uppercase;">Range Start</label>
+            <input id="dateFilter" type="date" title="Start Date">
+            <label style="font-size: 0.75rem; color: var(--muted); font-weight: 600; text-transform: uppercase;">End</label>
+            <input id="exportEndDate" type="date" title="End Date (Optional)">
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="secondary-btn" id="exportTodayBtn" type="button">Today's Attendance</button>
+            <button class="secondary-btn" id="exportAbsenteesBtn" type="button">Today's Absentees</button>
+            <button class="secondary-btn" id="exportBtn" type="button">Export CSV</button>
+          </div>
+        </div>
+
+        <div class="table-wrap glass" data-aos="fade">
+          <table>
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Roll No / ID</th>
+                <th>Department</th>
+                <th>Class</th>
+                <th>Morning</th>
+                <th>Afternoon</th>
+                <th>Timestamp</th>
+                <th>Attendance rate</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceTable"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; <span id="year"></span> Kamaraj College of Engineering & Technology. AI Smart Campus Student Attendance Portal. <a href="dev_access.html" class="footer-link">Developer Access</a></p>
+    </footer>
+  </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+  
+  <div class="success-modal" id="successModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="success-card glass">
+      <div class="checkmark"></div>
+      <h3 id="modalTitle">Process Complete</h3>
+      <p id="modalText">Record stored successfully.</p>
+      <button class="primary-btn" id="closeModalBtn" type="button">Done</button>
+    </div>
+  </div>
+
+  <div id="pwaInstallBanner" class="pwa-install-banner hidden">
+    <p>Add Smart Campus Student Attendance to your Home Screen for quick mobile attendance scans.</p>
+    <div class="btn-row">
+      <button id="pwaInstallBtn" class="install-btn">Install</button>
+      <button id="pwaCloseBtn" class="close-btn">Close</button>
+    </div>
+  </div>
+</body>
+</html>

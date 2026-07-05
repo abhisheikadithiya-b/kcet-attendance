@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Student Attendance | Smart Campus Dashboard</title>
+  <meta name="description" content="AI-powered student attendance dashboard with face recognition and campus GPS verification.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script defer src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script defer src="assets/js/app.js"></script>
+</head>
+<body>
+  <div class="app-shell hidden" id="appShell">
+    <header class="topbar glass">
+      <a class="brand" href="#dashboard" aria-label="Go to dashboard">
+        <span class="brand-logo logo-image">
+          <img src="https://www.kamarajengg.edu.in/static/home/favicon.png" alt="KCET logo">
+        </span>
+        <span>
+          <strong id="collegeName">Kamaraj College of Engineering & Technology</strong>
+          <small>Smart Campus Student Attendance</small>
+        </span>
+      </a>
+
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="#dashboard">Dashboard</a>
+        <a href="#attendance">Live Scan</a>
+        <a href="#location">GPS</a>
+        <a href="#records">Records</a>
+        <a href="admin_login.html">Admin</a>
+        <a href="#about">About</a>
+      </nav>
+
+      <div class="top-actions">
+        <div class="status-chip" id="topStatus">
+          <span></span>
+          <strong>System Standby</strong>
+        </div>
+        <div class="clock-pill" aria-live="polite">
+          <span id="currentDate">Loading date</span>
+          <strong id="currentTime">--:--:--</strong>
+        </div>
+        <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle dark mode">
+          <span class="sun">☼</span>
+          <span class="moon">☾</span>
+        </button>
+        <button class="hamburger" id="menuToggle" type="button" aria-label="Open navigation">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero Dashboard Section -->
+      <section class="hero-section section-pad" id="dashboard">
+        <div class="hero-grid">
+          <div class="hero-copy" data-aos="fade">
+            <p class="eyebrow">AI smart campus attendance</p>
+            <h1>AI Student Attendance Monitoring System</h1>
+            <h2><span id="typingText"></span><span class="typing-caret"></span></h2>
+            <p class="hero-text">
+              Identify students automatically at campus entry points. The system cross-verifies coordinate bounds via GPS, prevents duplicate registration logs, and archives real-time attendance timestamps.
+            </p>
+            <div class="hero-actions">
+              <a class="primary-btn" href="#attendance">Start Auto Scan</a>
+              <a class="secondary-btn" href="admin_login.html">Register Student</a>
+            </div>
+          </div>
+
+          <div class="hero-orbit" data-aos="fade" data-aos-delay="100">
+            <div class="campus-core">
+              <img src="https://www.kamarajengg.edu.in/static/home/favicon.png" alt="KCET logo">
+              <span class="scan-dot"></span>
+              <strong>KCET Student Gate</strong>
+              <small id="heroStatus">Active verification bounds</small>
+            </div>
+            <div class="signal-list">
+              <div class="signal-card">Class GPS Bounds Lock</div>
+              <div class="signal-card">Realtime Facial Matching</div>
+              <div class="signal-card">Local Storage Sync Engine</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card glass" data-aos="fade" data-aos-delay="50">
+            <span>Total Students</span>
+            <strong id="totalStudents">0</strong>
+            <small>Active database register</small>
+          </article>
+          <article class="stat-card glass" data-aos="fade" data-aos-delay="100">
+            <span>Students Present Today</span>
+            <strong id="presentStudents">0</strong>
+            <small>Logged inside class bounds</small>
+          </article>
+          <article class="stat-card glass" data-aos="fade" data-aos-delay="150">
+            <span>Absent Students</span>
+            <strong id="absentStudents">0</strong>
+            <small>Not yet checked-in today</small>
+          </article>
+          <article class="stat-card glass" data-aos="fade" data-aos-delay="200">
+            <span>Attendance Rate</span>
+            <strong id="attendanceRate">0%</strong>
+            <small>Average student ratio</small>
+          </article>
+        </div>
+      </section>
+
+      <!-- Live Scan Section -->
+      <section class="section-pad split-section" id="attendance">
+        <div class="section-heading" data-aos="fade">
+          <p class="eyebrow">Biometric scan</p>
+          <h2>Automatic student recognition</h2>
+        </div>
+
+        <div class="attendance-layout">
+          <div class="scanner-panel glass" data-aos="fade">
+            <div class="camera-frame" id="cameraFrame">
+              <video id="video" autoplay muted playsinline></video>
+              <canvas id="overlayCanvas"></canvas>
+              <div class="face-guide"></div>
+              <div class="camera-placeholder" id="cameraPlaceholder">
+                <strong>Student Check-in Camera</strong>
+                <small>Activate camera and verify location bounds to log attendance</small>
+              </div>
+            </div>
+            <div class="scanner-status">
+              <span class="status-pulse" id="scanPulse"></span>
+              <strong id="scanStatus">Camera standby</strong>
+              <small id="scanHint">Marking attendance requires location match & descriptor confirmation.</small>
+            </div>
+            <div class="recognition-strip">
+              <div>
+                <span>Identified Student</span>
+                <strong id="recognizedName">Waiting for detection</strong>
+              </div>
+              <div>
+                <span>Check-in Timestamp</span>
+                <strong id="recognizedTime">--</strong>
+              </div>
+            </div>
+            <div class="button-row">
+              <button class="primary-btn" id="verifyLocationBtn" type="button">Verify GPS</button>
+              <button class="secondary-btn" id="startCameraBtn" type="button" disabled>Start Camera</button>
+            </div>
+          </div>
+
+          <!-- Location verification panel -->
+          <aside class="location-panel glass" id="location" data-aos="fade">
+            <div class="panel-title">
+              <span class="gps-indicator" id="gpsIndicator"></span>
+              <div>
+                <p class="eyebrow">Location verification</p>
+                <h3 id="campusStatus">Coordinates not checked</h3>
+              </div>
+            </div>
+            <div class="location-grid">
+              <div>
+                <span>Live Latitude</span>
+                <strong id="latitudeValue">--</strong>
+              </div>
+              <div>
+                <span>Live Longitude</span>
+                <strong id="longitudeValue">--</strong>
+              </div>
+              <div>
+                <span>Target Center Distance</span>
+                <strong id="distanceValue">--</strong>
+              </div>
+              <div>
+                <span>Status check</span>
+                <strong id="insideCampusValue">Waiting</strong>
+              </div>
+            </div>
+            <div class="campus-map" id="mapView">
+              <!-- Leaflet satellite map will render here -->
+            </div>
+            <div class="verification-card" id="verificationCard">
+              <span></span>
+              <p>Attendance logs are only write-permitted inside coordinates bounds.</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- Records History Section -->
+      <section class="section-pad" id="records">
+        <div class="section-heading" data-aos="fade">
+          <p class="eyebrow">Database register</p>
+          <h2>Student attendance records</h2>
+        </div>
+
+        <div class="records-toolbar glass" data-aos="fade">
+          <input id="searchInput" type="search" placeholder="Filter by student name, ID/Roll number, class, or department">
+          <input id="dateFilter" type="date">
+        </div>
+
+        <div class="table-wrap glass" data-aos="fade">
+          <table>
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Roll No / ID</th>
+                <th>Department</th>
+                <th>Class</th>
+                <th>Morning Shift</th>
+                <th>Afternoon Shift</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- About Section -->
+      <section class="section-pad about-section" id="about">
+        <div class="section-heading" data-aos="fade">
+          <p class="eyebrow">Smart Portal Info</p>
+          <h2>About system</h2>
+        </div>
+
+        <div class="about-grid">
+          <article class="glass" data-aos="fade">
+            <h3>Institution Coordinates</h3>
+            <p>Kamaraj College of Engineering & Technology, S.P.G. Chidambara Nadar - C. Nagammal Campus, K. Vellakulam near Virudhunagar.</p>
+          </article>
+          <article class="glass" data-aos="fade">
+            <h3>Operational Flow</h3>
+            <p>The application registers students' face patterns locally, calculates real-time coordinate distances, and logs tamper-proof entries.</p>
+          </article>
+          <article class="glass" data-aos="fade">
+            <h3>AI Infrastructure</h3>
+            <p>Built with face-api.js leveraging tiny YOLOs and ResNet models, rendering high-speed local computer vision inside browser runtimes.</p>
+          </article>
+          <article class="glass" data-aos="fade">
+            <h3>Key Advantages</h3>
+            <p>Zero-hardware setup, accurate geofencing restrictions, clean local file reports generation, and seamless offline capability.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; <span id="year"></span> Kamaraj College of Engineering & Technology. AI Smart Campus Student Attendance Portal. <a href="dev_access.html" class="footer-link">Developer Access</a></p>
+    </footer>
+  </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <div class="success-modal" id="successModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="success-card glass">
+      <div class="checkmark"></div>
+      <h3 id="modalTitle">Verification Complete</h3>
+      <p id="modalText">Profile matched successfully.</p>
+      <button class="primary-btn" id="closeModalBtn" type="button">Done</button>
+    </div>
+  </div>
+
+  <div id="pwaInstallBanner" class="pwa-install-banner hidden">
+    <p>Add Smart Campus Student Attendance to your Home Screen for quick mobile attendance scans.</p>
+    <div class="btn-row">
+      <button id="pwaInstallBtn" class="install-btn">Install</button>
+      <button id="pwaCloseBtn" class="close-btn">Close</button>
+    </div>
+  </div>
+
+  <!-- Task 1: Splash screen overlay -->
+  <div id="splashScreen" class="splash-screen">
+    <div class="splash-logo-container">
+      <img src="https://www.kamarajengg.edu.in/static/home/favicon.png" alt="KCET Logo" class="splash-logo">
+      <h2 class="splash-title">KCET Smart Campus</h2>
+    </div>
+  </div>
+
+  <!-- Task 2: Student Login Gateway overlay -->
+  <div id="studentLoginScreen" class="student-login-screen hidden">
+    <div class="login-card">
+      <img src="https://www.kamarajengg.edu.in/static/home/favicon.png" alt="KCET Logo" class="login-logo">
+      <h2>Student Portal Check-in</h2>
+      <p>Enter your class and enter class password to unlock access.</p>
+      
+      <form id="studentLoginForm">
+        <label class="login-label">
+          <span>Enter Class</span>
+          <input type="text" id="studentClass" placeholder="Example: a1, a2, a3" required autocomplete="off">
+        </label>
+        
+        <label class="login-label">
+          <span>Class Password</span>
+          <input type="password" id="studentPassword" placeholder="Enter password" required>
+        </label>
+        
+        <p class="error-msg" id="studentLoginError">Incorrect password. Please try again.</p>
+        <button class="primary-btn" type="submit" style="width: 100%;">Verify & Enter</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

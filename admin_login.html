@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | KCET Smart Campus</title>
+  <meta name="description" content="Admin login for registering new student faces.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <script defer src="assets/js/app.js"></script>
+  <style>
+    .admin-login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .admin-login-card {
+      max-width: 380px;
+      width: 100%;
+      padding: 30px;
+      text-align: center;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .admin-login-card img {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      object-fit: contain;
+    }
+    .admin-login-card h2 {
+      margin-bottom: 6px;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    .admin-login-card p {
+      color: var(--muted);
+      margin-bottom: 24px;
+      font-size: 0.85rem;
+    }
+    .admin-login-card input {
+      width: 100%;
+      margin-bottom: 16px;
+      text-align: center;
+      letter-spacing: 0.1em;
+    }
+    .admin-login-card .error-msg {
+      color: var(--danger);
+      font-size: 0.8rem;
+      margin-top: -10px;
+      margin-bottom: 12px;
+      display: none;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-login-wrapper">
+    <div class="admin-login-card">
+      <img src="https://www.kamarajengg.edu.in/static/home/favicon.png" alt="KCET logo">
+      <h2>Administrator Access</h2>
+      <p>Enter the admin password to register student patterns.</p>
+      
+      <form id="adminLoginForm">
+        <label class="login-label">
+          <span>Enter Class</span>
+          <input type="text" id="adminClass" placeholder="Example: a1, a2, a3" required autocomplete="off">
+        </label>
+        
+        <label class="login-label">
+          <span>Admin Password</span>
+          <input type="password" id="adminPassword" placeholder="Enter password" required>
+        </label>
+        <p class="error-msg" id="loginError">Incorrect password. Please try again.</p>
+        <button class="primary-btn" type="submit" style="width: 100%;">Login to Register</button>
+      </form>
+      
+      <div style="margin-top: 20px;">
+        <a href="index.html" style="color: var(--muted); text-decoration: none; font-size: 0.8rem; font-weight: 500; transition: color 0.15s ease;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">&larr; Back to Dashboard</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const cls = document.getElementById('adminClass').value.trim();
+      const pwd = document.getElementById('adminPassword').value;
+      
+      try {
+        const res = await fetch('/api/admin-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ classCode: cls, password: pwd })
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+          sessionStorage.setItem('isAdmin', 'true');
+          sessionStorage.setItem('adminClass', cls);
+          window.location.href = 'register.html';
+        } else {
+          document.getElementById('loginError').textContent = data.message || 'Incorrect password. Please try again.';
+          document.getElementById('loginError').style.display = 'block';
+          document.getElementById('adminPassword').value = '';
+        }
+      } catch (err) {
+        document.getElementById('loginError').textContent = 'Server connection error. Please verify the backend is running.';
+        document.getElementById('loginError').style.display = 'block';
+      }
+    });
+  </script>
+
+  <div id="pwaInstallBanner" class="pwa-install-banner hidden">
+    <p>Add Smart Campus Student Attendance to your Home Screen for quick mobile attendance scans.</p>
+    <div class="btn-row">
+      <button id="pwaInstallBtn" class="install-btn">Install</button>
+      <button id="pwaCloseBtn" class="close-btn">Close</button>
+    </div>
+  </div>
+</body>
+</html>

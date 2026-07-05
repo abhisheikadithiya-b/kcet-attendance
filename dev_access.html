@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Developer Portal | KCET Smart Campus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <style>
+    .dev-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .dev-card {
+      max-width: 600px;
+      width: 100%;
+      padding: 30px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .text-center {
+      text-align: center;
+    }
+    .logo {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      object-fit: contain;
+    }
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .class-item {
+      border: 1px solid var(--line);
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg);
+    }
+    .class-details {
+      font-size: 0.8rem;
+    }
+    .class-details strong {
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+    .class-details p {
+      color: var(--muted);
+      margin-top: 4px;
+      font-family: monospace;
+    }
+    .danger-btn {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #ffffff;
+    }
+    .danger-btn:hover {
+      background: #b01e1e;
+      border-color: #b01e1e;
+    }
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    /* Class Actions buttons optimizations */
+    .class-actions {
+      display: flex;
+      gap: 8px;
+      white-space: nowrap;
+      min-width: 140px;
+      justify-content: flex-end;
+    }
+    
+    .class-actions .icon-btn {
+      padding: 6px 12px !important;
+      font-size: 0.75rem !important;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      white-space: nowrap;
+      box-sizing: border-box;
+      min-width: 60px;
+    }
+    
+    .class-actions .icon-btn:hover {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+    
+    .class-actions .danger-btn {
+      background: var(--danger) !important;
+      border-color: var(--danger) !important;
+      color: #ffffff !important;
+    }
+    
+    .class-actions .danger-btn:hover {
+      background: #b01e1e !important;
+      border-color: #b01e1e !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="dev-wrapper">
+    <!-- Login Card -->
+    <div id="devLoginCard" class="dev-card text-center">
+      <img src="https://www.kamarajengg.edu.in/static/home/favicon.png" alt="KCET logo" class="logo">
+      <h2>Developer Portal Access</h2>
+      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 24px;">Enter developer password to access class parameters.</p>
+      
+      <form id="devLoginForm" style="max-width: 320px; margin: 0 auto;">
+        <input type="password" id="devPassword" placeholder="Enter dev password" required style="width: 100%; margin-bottom: 12px; text-align: center;">
+        <p class="error-msg" id="devLoginError" style="color: var(--danger); display: none; margin-bottom: 12px; font-size: 0.8rem; font-weight: 600;">Incorrect developer password.</p>
+        <button class="primary-btn" type="submit" style="width: 100%;">Login</button>
+      </form>
+      
+      <div style="margin-top: 20px;">
+        <a href="index.html" style="color: var(--muted); text-decoration: none; font-size: 0.8rem;">&larr; Back to Dashboard</a>
+      </div>
+    </div>
+
+    <!-- Dev Dashboard (Initially Hidden) -->
+    <div id="devDashboard" class="dev-card hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="https://www.kamarajengg.edu.in/static/home/favicon.png" alt="KCET logo" style="width: 28px; height: 28px;">
+          <h2 style="margin: 0; font-size: 1.25rem;">Developer Dashboard</h2>
+        </div>
+        <button class="secondary-btn" onclick="logoutDev()" style="padding: 6px 12px; font-size: 0.75rem;">Logout</button>
+      </div>
+
+      <!-- Add New Class Form -->
+      <section style="margin-bottom: 30px;">
+        <h3 style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 16px;">Add New Class Boundaries</h3>
+        
+        <form id="addClassForm">
+          <label class="login-label" style="display: block; margin-bottom: 12px;">
+            <span>Class Code (e.g. d13, d14)</span>
+            <input type="text" id="newClassCode" placeholder="Class Code" required style="width: 100%; text-transform: lowercase;">
+          </label>
+          
+          <p style="font-size: 0.8rem; font-weight: 600; color: var(--text); margin-bottom: 8px;">Boundary Polygon Coordinates (4 Points)</p>
+          <div class="input-grid">
+            <input type="number" step="any" id="p1Lat" placeholder="Point 1 Latitude" required>
+            <input type="number" step="any" id="p1Lon" placeholder="Point 1 Longitude" required>
+          </div>
+          <div class="input-grid">
+            <input type="number" step="any" id="p2Lat" placeholder="Point 2 Latitude" required>
+            <input type="number" step="any" id="p2Lon" placeholder="Point 2 Longitude" required>
+          </div>
+          <div class="input-grid">
+            <input type="number" step="any" id="p3Lat" placeholder="Point 3 Latitude" required>
+            <input type="number" step="any" id="p3Lon" placeholder="Point 3 Longitude" required>
+          </div>
+          <div class="input-grid">
+            <input type="number" step="any" id="p4Lat" placeholder="Point 4 Latitude" required>
+            <input type="number" step="any" id="p4Lon" placeholder="Point 4 Longitude" required>
+          </div>
+          
+          <p style="font-size: 0.8rem; font-weight: 600; color: var(--text); margin-top: 12px; margin-bottom: 8px;">Class Access Passwords</p>
+          <div class="input-grid">
+            <label class="login-label" style="display: block; margin: 0;">
+              <span>Student Password</span>
+              <input type="text" id="classStudentPassword" placeholder="Default: class123" style="width: 100%; margin: 0;">
+            </label>
+            <label class="login-label" style="display: block; margin: 0;">
+              <span>Admin Password</span>
+              <input type="text" id="classAdminPassword" placeholder="Default: admin123" style="width: 100%; margin: 0;">
+            </label>
+          </div>
+          
+          <button class="primary-btn" type="submit" style="width: 100%;">Create Class</button>
+        </form>
+      </section>
+
+      <!-- Configured Classes List -->
+      <section style="margin-bottom: 24px;">
+        <h3 style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 12px;">Configured Classes</h3>
+        <div id="classesList"></div>
+      </section>
+
+      <hr style="border: 0; border-top: 1px solid var(--line); margin: 24px 0;">
+
+      <!-- Global Actions -->
+      <section>
+        <h3 style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--danger); margin-bottom: 12px;">Danger Zone</h3>
+        <div class="btn-row">
+          <button class="primary-btn danger-btn" onclick="resetAllData()">Reset All System Data</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // Constants & Default configs
+    const defaultClassesConfig = {
+      'd11': {
+        minLat: 9.673417,
+        maxLat: 9.673443,
+        minLon: 77.964781,
+        maxLon: 77.964789,
+        polygon: [
+          [9.673417, 77.964787],
+          [9.673437, 77.964781],
+          [9.673443, 77.964789],
+          [9.673420, 77.964789]
+        ]
+      },
+      'd12': {
+        minLat: 9.673417,
+        maxLat: 9.673443,
+        minLon: 77.9647702,
+        maxLon: 77.9647782,
+        polygon: [
+          [9.673417, 77.9647762],
+          [9.673437, 77.9647702],
+          [9.673443, 77.9647782],
+          [9.673420, 77.9647782]
+        ]
+      }
+    };
+
+    // Session status check
+    const devToken = sessionStorage.getItem('devToken');
+    if (devToken) {
+      showDashboard();
+    }
+
+    document.getElementById('devLoginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const pwd = document.getElementById('devPassword').value;
+      try {
+        const res = await fetch('/api/dev-login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pwd })
+        });
+        const data = await res.json();
+        if (res.ok && data.token) {
+          sessionStorage.setItem('devToken', data.token);
+          showDashboard();
+        } else {
+          document.getElementById('devLoginError').textContent = data.message || 'Incorrect password.';
+          document.getElementById('devLoginError').style.display = 'block';
+          document.getElementById('devPassword').value = '';
+        }
+      } catch (err) {
+        document.getElementById('devLoginError').textContent = 'Server connection error. Please verify the backend is running.';
+        document.getElementById('devLoginError').style.display = 'block';
+      }
+    });
+
+    let classesConfig = {}; // Local cached copy of coordinates
+
+    async function showDashboard() {
+      document.getElementById('devLoginCard').classList.add('hidden');
+      document.getElementById('devDashboard').classList.remove('hidden');
+      await fetchConfiguredClasses();
+    }
+
+    window.logoutDev = function() {
+      sessionStorage.removeItem('devToken');
+      window.location.reload();
+    };
+
+    async function fetchConfiguredClasses() {
+      const token = sessionStorage.getItem('devToken');
+      try {
+        const res = await fetch('/api/classes', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.status === 401) {
+          logoutDev();
+          return;
+        }
+        classesConfig = await res.json();
+        renderConfiguredClasses();
+      } catch (err) {
+        alert("Failed to fetch classes from server.");
+      }
+    }
+
+    function renderConfiguredClasses() {
+      const listDiv = document.getElementById('classesList');
+      const keys = Object.keys(classesConfig);
+
+      if (keys.length === 0) {
+        listDiv.innerHTML = '<p style="color: var(--muted); font-size: 0.85rem;">No classes configured.</p>';
+        return;
+      }
+
+      listDiv.innerHTML = keys.map(key => {
+        const poly = classesConfig[key].polygon || [];
+        const coordsStr = poly.map(pt => `${pt[0]}, ${pt[1]}`).join('<br>');
+        const studentPwd = classesConfig[key].studentPassword || `${key}123 / student123`;
+        const adminPwd = classesConfig[key].adminPassword || 'admin123';
+        return `
+          <div class="class-item">
+            <div class="class-details">
+              <strong>Class: ${key.toUpperCase()}</strong>
+              <p>Polygon vertices:<br>${coordsStr}</p>
+              <p style="margin-top: 6px; font-family: sans-serif; font-size: 0.75rem; line-height: 1.4;">
+                Student Password: <code style="background: var(--bg-2); padding: 2px 4px; border-radius: var(--radius-sm); font-size: 0.7rem;">${studentPwd}</code><br>
+                Admin Password: <code style="background: var(--bg-2); padding: 2px 4px; border-radius: var(--radius-sm); font-size: 0.7rem;">${adminPwd}</code>
+              </p>
+            </div>
+            <div class="class-actions">
+              <button class="icon-btn" onclick="editClass('${key}')">Edit</button>
+              <button class="icon-btn danger-btn" onclick="deleteClass('${key}')">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    let editMode = false;
+
+    window.editClass = function(key) {
+      const config = classesConfig[key];
+      if (!config) return;
+
+      editMode = true;
+      
+      const classInput = document.getElementById('newClassCode');
+      classInput.value = key;
+      classInput.disabled = true;
+
+      const poly = config.polygon || [];
+      if (poly.length >= 4) {
+        document.getElementById('p1Lat').value = poly[0][0];
+        document.getElementById('p1Lon').value = poly[0][1];
+        document.getElementById('p2Lat').value = poly[1][0];
+        document.getElementById('p2Lon').value = poly[1][1];
+        document.getElementById('p3Lat').value = poly[2][0];
+        document.getElementById('p3Lon').value = poly[2][1];
+        document.getElementById('p4Lat').value = poly[3][0];
+        document.getElementById('p4Lon').value = poly[3][1];
+      }
+
+      document.getElementById('classStudentPassword').value = config.studentPassword || "";
+      document.getElementById('classAdminPassword').value = config.adminPassword || "";
+
+      document.querySelector('#addClassForm button[type="submit"]').textContent = "Update Class";
+      document.getElementById('newClassCode').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    document.getElementById('addClassForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const classCode = document.getElementById('newClassCode').value.trim().toLowerCase();
+      
+      const p1Lat = parseFloat(document.getElementById('p1Lat').value);
+      const p1Lon = parseFloat(document.getElementById('p1Lon').value);
+      const p2Lat = parseFloat(document.getElementById('p2Lat').value);
+      const p2Lon = parseFloat(document.getElementById('p2Lon').value);
+      const p3Lat = parseFloat(document.getElementById('p3Lat').value);
+      const p3Lon = parseFloat(document.getElementById('p3Lon').value);
+      const p4Lat = parseFloat(document.getElementById('p4Lat').value);
+      const p4Lon = parseFloat(document.getElementById('p4Lon').value);
+
+      const polygon = [
+        [p1Lat, p1Lon],
+        [p2Lat, p2Lon],
+        [p3Lat, p3Lon],
+        [p4Lat, p4Lon]
+      ];
+
+      const lats = [p1Lat, p2Lat, p3Lat, p4Lat];
+      const lons = [p1Lon, p2Lon, p3Lon, p4Lon];
+      const minLat = Math.min(...lats);
+      const maxLat = Math.max(...lats);
+      const minLon = Math.min(...lons);
+      const maxLon = Math.max(...lons);
+
+      const studentPassword = document.getElementById('classStudentPassword').value.trim();
+      const adminPassword = document.getElementById('classAdminPassword').value.trim();
+
+      const token = sessionStorage.getItem('devToken');
+      try {
+        const res = await fetch('/api/classes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ 
+            classCode, 
+            minLat, 
+            maxLat, 
+            minLon, 
+            maxLon, 
+            polygon,
+            studentPassword: studentPassword || undefined,
+            adminPassword: adminPassword || undefined
+          })
+        });
+
+        if (res.status === 401) {
+          logoutDev();
+          return;
+        }
+
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('addClassForm').reset();
+          document.getElementById('newClassCode').disabled = false;
+          document.querySelector('#addClassForm button[type="submit"]').textContent = "Create Class";
+          editMode = false;
+          await fetchConfiguredClasses();
+          alert(`Class ${classCode.toUpperCase()} configured successfully!`);
+        } else {
+          alert(data.message || "Failed to configure class boundary.");
+        }
+      } catch (err) {
+        alert("Failed to connect to backend server.");
+      }
+    });
+
+    window.deleteClass = async function(key) {
+      if (confirm(`Are you sure you want to delete class ${key.toUpperCase()} and all its coordinates?`)) {
+        const token = sessionStorage.getItem('devToken');
+        try {
+          const res = await fetch(`/api/classes/${key}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          if (res.status === 401) {
+            logoutDev();
+            return;
+          }
+          
+          const data = await res.json();
+          if (data.success) {
+            // Also clean up local browser datasets
+            const attendance = JSON.parse(localStorage.getItem("studentAttendanceRecords") || "{}");
+            Object.keys(attendance).forEach(dateKey => {
+              Object.keys(attendance[dateKey]).forEach(studentId => {
+                if (attendance[dateKey][studentId].year && attendance[dateKey][studentId].year.toLowerCase() === key) {
+                  delete attendance[dateKey][studentId];
+                }
+              });
+            });
+            localStorage.setItem("studentAttendanceRecords", JSON.stringify(attendance));
+
+            const customStudents = JSON.parse(localStorage.getItem("customStudentsList") || "[]");
+            const filteredStudents = customStudents.filter(s => s.year && s.year.toLowerCase() !== key);
+            localStorage.setItem("customStudentsList", JSON.stringify(filteredStudents));
+
+            await fetchConfiguredClasses();
+            alert(`Class ${key.toUpperCase()} deleted.`);
+          } else {
+            alert(data.message || "Failed to delete class.");
+          }
+        } catch (err) {
+          alert("Failed to connect to backend server.");
+        }
+      }
+    };
+
+    window.resetAllData = function() {
+      if (confirm('WARNING: This will completely erase all local student databases, face descriptors, and attendance logs. Proceed?')) {
+        localStorage.clear();
+        alert('All storage wiped successfully.');
+        window.location.reload();
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{
+  "short_name": "Student Checkin",
+  "name": "Smart Campus Student Attendance Portal",
+  "description": "AI-powered student attendance check-in system with facial recognition and geofenced campus verification.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0d0d0f",
+  "background_color": "#0d0d0f",
+  "icons": [
+    {
+      "src": "assets/img/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "assets/img/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
