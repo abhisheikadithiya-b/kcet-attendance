@@ -3,16 +3,21 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
 // Enable CORS and JSON parsing
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+
 // Serve static web pages (fallback for local hosting)
 app.use(express.static(path.join(__dirname, '..')));
+
 // Config file storage setup
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const CONFIG_FILE = path.join(DATA_DIR, 'classes_config.json');
+
 const defaultClassesConfig = {
   'd11': {
     minLat: 9.673417,
@@ -39,7 +44,9 @@ const defaultClassesConfig = {
     ]
   }
 };
+
 let inMemoryConfig = null;
+
 function getClassesConfig() {
   if (inMemoryConfig) return inMemoryConfig;
   try {
@@ -54,6 +61,7 @@ function getClassesConfig() {
   inMemoryConfig = { ...defaultClassesConfig };
   return inMemoryConfig;
 }
+
 function saveClassesConfig(config) {
   inMemoryConfig = config;
   try {
@@ -65,6 +73,7 @@ function saveClassesConfig(config) {
     console.warn('Persistent config save failed (expected on Vercel read-only system):', err.message);
   }
 }
+
 // Initialize configurations folder if writeable
 try {
   if (!fs.existsSync(DATA_DIR)) {
@@ -76,8 +85,10 @@ try {
 } catch (err) {
   console.warn('Database initialization skipped on read-only system.');
 }
+
 // Dev token secret
 const DEV_TOKEN = process.env.DEV_TOKEN || "dev-session-token-987";
+
 // In-memory Rate Limiter middleware
 const ipRequests = {};
 function apiRateLimiter(req, res, next) {
@@ -95,15 +106,17 @@ function apiRateLimiter(req, res, next) {
   ipRequests[ip].push(now);
   next();
 }
+
 // Dev Login API
 app.post('/api/dev-login', apiRateLimiter, (req, res) => {
   const { password } = req.body;
-  const expectedPassword = process.env.DEV_PASSWORD || "dev@kcet123";
+  const expectedPassword = process.env.DEV_PASSWORD || "KcetDevSecurePortal#2026";
   if (password === expectedPassword) {
     return res.json({ success: true, token: DEV_TOKEN });
   }
   return res.status(401).json({ success: false, message: 'Incorrect developer password.' });
 });
+
 // Student Login API
 app.post('/api/student-login', apiRateLimiter, (req, res) => {
   const { classCode, password } = req.body;
@@ -115,11 +128,12 @@ app.post('/api/student-login', apiRateLimiter, (req, res) => {
   const config = configs[code];
   
   const expectedPwd = (config && config.studentPassword) ? config.studentPassword : (code + '123');
-  if (password === expectedPwd || password === 'student123') {
+  if (password === expectedPwd || password === "KcetStudentSecureGate#2026") {
     return res.json({ success: true });
   }
   return res.status(401).json({ success: false, message: 'Incorrect password for this class.' });
 });
+
 // Admin Login API
 app.post('/api/admin-login', apiRateLimiter, (req, res) => {
   const { classCode, password } = req.body;
@@ -130,12 +144,13 @@ app.post('/api/admin-login', apiRateLimiter, (req, res) => {
   const configs = getClassesConfig();
   const config = configs[code];
   
-  const expectedPwd = (config && config.adminPassword) ? config.adminPassword : 'admin123';
+  const expectedPwd = (config && config.adminPassword) ? config.adminPassword : "KcetAdminSecurePanel#2026";
   if (password === expectedPwd) {
     return res.json({ success: true });
   }
   return res.status(401).json({ success: false, message: 'Incorrect administrator password.' });
 });
+
 // Configured Classes GET endpoint
 app.get('/api/classes', (req, res) => {
   const authHeader = req.headers.authorization;
@@ -155,6 +170,7 @@ app.get('/api/classes', (req, res) => {
   
   return res.json(result);
 });
+
 // Add / Edit Class configuration
 app.post('/api/classes', (req, res) => {
   const authHeader = req.headers.authorization;
@@ -183,6 +199,7 @@ app.post('/api/classes', (req, res) => {
   saveClassesConfig(configs);
   return res.json({ success: true, message: `Class ${code.toUpperCase()} updated.` });
 });
+
 // Delete Class configuration
 app.delete('/api/classes/:classCode', (req, res) => {
   const authHeader = req.headers.authorization;
@@ -201,12 +218,14 @@ app.delete('/api/classes/:classCode', (req, res) => {
   
   return res.status(404).json({ success: false, message: 'Class not found.' });
 });
+
 // API Endpoint: /api/external-verify
 app.post('/api/external-verify', apiRateLimiter, async (req, res) => {
   const { image, targetId } = req.body;
   if (!image) {
     return res.status(400).json({ success: false, message: 'Image data missing.' });
   }
+
   const azureKey = process.env.AZURE_FACE_KEY;
   const azureEndpoint = process.env.AZURE_FACE_ENDPOINT;
   if (azureKey && azureEndpoint) {
@@ -222,6 +241,7 @@ app.post('/api/external-verify', apiRateLimiter, async (req, res) => {
         },
         body: buffer
       });
+
       const detections = await response.json();
       if (!response.ok) {
         throw new Error(detections.error ? detections.error.message : 'Azure Face detection failed.');
@@ -229,6 +249,7 @@ app.post('/api/external-verify', apiRateLimiter, async (req, res) => {
       if (detections.length === 0) {
         return res.json({ success: false, message: 'No face detected by Azure Cloud AI.' });
       }
+
       const faceId = detections[0].faceId;
       return res.json({
         success: true,
@@ -241,6 +262,7 @@ app.post('/api/external-verify', apiRateLimiter, async (req, res) => {
       return res.status(502).json({ success: false, message: 'Cloud service connection error. Please try again.' });
     }
   }
+
   const hfToken = process.env.HUGGING_FACE_TOKEN;
   if (hfToken) {
     try {
@@ -255,10 +277,12 @@ app.post('/api/external-verify', apiRateLimiter, async (req, res) => {
         },
         body: buffer
       });
+
       const result = await response.json();
       if (!response.ok) {
         throw new Error(result.error ? result.error : 'Hugging Face inference failed.');
       }
+
       return res.json({
         success: true,
         engine: 'Hugging Face Inference API',
@@ -270,15 +294,18 @@ app.post('/api/external-verify', apiRateLimiter, async (req, res) => {
       return res.status(502).json({ success: false, message: 'Hugging Face API error. Please try again.' });
     }
   }
+
   return res.json({
     success: false,
     engine: 'Local Engine',
     message: 'No cloud keys configured. Using local high-accuracy SSD Mobilenet v1 AI model.'
   });
 });
+
 if (process.env.NODE_ENV !== 'production' && require.main === module) {
   app.listen(PORT, () => {
     console.log(`Server running locally on port ${PORT}`);
   });
 }
+
 module.exports = app;
