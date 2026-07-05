@@ -28,7 +28,50 @@ const defaultShifts = {
 
 let inMemoryShifts = null;
 
-function getShiftsConfig() {
+async function getShiftsConfigFromCloud() {
+  const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
+  if (!FIREBASE_PROJECT_ID) return null;
+  try {
+    const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/systemConfig/shifts`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const doc = await res.json();
+      if (doc.fields && doc.fields.data && doc.fields.data.stringValue) {
+        return JSON.parse(doc.fields.data.stringValue);
+      }
+    }
+  } catch (err) {
+    console.error("Firestore read shifts failed:", err.message);
+  }
+  return null;
+}
+
+async function saveShiftsConfigToCloud(config) {
+  const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
+  if (!FIREBASE_PROJECT_ID) return;
+  try {
+    const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/systemConfig/shifts`;
+    await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fields: {
+          data: { stringValue: JSON.stringify(config) }
+        }
+      })
+    });
+  } catch (err) {
+    console.error("Firestore write shifts failed:", err.message);
+  }
+}
+
+async function getShiftsConfig() {
+  const cloudData = await getShiftsConfigFromCloud();
+  if (cloudData) {
+    inMemoryShifts = cloudData;
+    return inMemoryShifts;
+  }
+
   if (inMemoryShifts) return inMemoryShifts;
   try {
     if (fs.existsSync(SHIFTS_FILE)) {
@@ -43,8 +86,9 @@ function getShiftsConfig() {
   return inMemoryShifts;
 }
 
-function saveShiftsConfig(config) {
+async function saveShiftsConfig(config) {
   inMemoryShifts = config;
+  await saveShiftsConfigToCloud(config);
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -84,7 +128,50 @@ const defaultClassesConfig = {
 
 let inMemoryConfig = null;
 
-function getClassesConfig() {
+async function getClassesConfigFromCloud() {
+  const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
+  if (!FIREBASE_PROJECT_ID) return null;
+  try {
+    const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/systemConfig/classes`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const doc = await res.json();
+      if (doc.fields && doc.fields.data && doc.fields.data.stringValue) {
+        return JSON.parse(doc.fields.data.stringValue);
+      }
+    }
+  } catch (err) {
+    console.error("Firestore read classes failed:", err.message);
+  }
+  return null;
+}
+
+async function saveClassesConfigToCloud(config) {
+  const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID;
+  if (!FIREBASE_PROJECT_ID) return;
+  try {
+    const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/systemConfig/classes`;
+    await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fields: {
+          data: { stringValue: JSON.stringify(config) }
+        }
+      })
+    });
+  } catch (err) {
+    console.error("Firestore write classes failed:", err.message);
+  }
+}
+
+async function getClassesConfig() {
+  const cloudData = await getClassesConfigFromCloud();
+  if (cloudData) {
+    inMemoryConfig = cloudData;
+    return inMemoryConfig;
+  }
+
   if (inMemoryConfig) return inMemoryConfig;
   try {
     if (fs.existsSync(CONFIG_FILE)) {
@@ -99,8 +186,9 @@ function getClassesConfig() {
   return inMemoryConfig;
 }
 
-function saveClassesConfig(config) {
+async function saveClassesConfig(config) {
   inMemoryConfig = config;
+  await saveClassesConfigToCloud(config);
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -158,13 +246,13 @@ app.post('/api/dev-login', apiRateLimiter, (req, res) => {
 });
 
 // Student Login API
-app.post('/api/student-login', apiRateLimiter, (req, res) => {
+app.post('/api/student-login', apiRateLimiter, async (req, res) => {
   const { classCode, password } = req.body;
   if (!classCode || !password) {
     return res.status(400).json({ success: false, message: 'Class code and password required.' });
   }
   const code = classCode.toLowerCase();
-  const configs = getClassesConfig();
+  const configs = await getClassesConfig();
   const config = configs[code];
   
   const expectedPwd = (config && config.studentPassword) ? config.studentPassword : (code + '123');
@@ -175,13 +263,13 @@ app.post('/api/student-login', apiRateLimiter, (req, res) => {
 });
 
 // Admin Login API
-app.post('/api/admin-login', apiRateLimiter, (req, res) => {
+app.post('/api/admin-login', apiRateLimiter, async (req, res) => {
   const { classCode, password } = req.body;
   if (!classCode || !password) {
     return res.status(400).json({ success: false, message: 'Class code and password required.' });
   }
   const code = classCode.toLowerCase();
-  const configs = getClassesConfig();
+  const configs = await getClassesConfig();
   const config = configs[code];
   
   const expectedPwd = (config && config.adminPassword) ? config.adminPassword : "KcetAdminSecurePanel#2026";
@@ -192,11 +280,11 @@ app.post('/api/admin-login', apiRateLimiter, (req, res) => {
 });
 
 // Configured Classes GET endpoint
-app.get('/api/classes', (req, res) => {
+app.get('/api/classes', async (req, res) => {
   const authHeader = req.headers.authorization;
   const isAuthorized = authHeader && authHeader === `Bearer ${DEV_TOKEN}`;
   
-  const configs = getClassesConfig();
+  const configs = await getClassesConfig();
   const result = {};
   
   Object.keys(configs).forEach(key => {
@@ -212,7 +300,7 @@ app.get('/api/classes', (req, res) => {
 });
 
 // Add / Edit Class configuration
-app.post('/api/classes', (req, res) => {
+app.post('/api/classes', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || authHeader !== `Bearer ${DEV_TOKEN}`) {
     return res.status(401).json({ success: false, message: 'Unauthorized.' });
@@ -224,7 +312,7 @@ app.post('/api/classes', (req, res) => {
   }
   
   const code = classCode.toLowerCase();
-  const configs = getClassesConfig();
+  const configs = await getClassesConfig();
   
   configs[code] = {
     minLat,
@@ -236,23 +324,23 @@ app.post('/api/classes', (req, res) => {
     adminPassword: adminPassword || undefined
   };
   
-  saveClassesConfig(configs);
+  await saveClassesConfig(configs);
   return res.json({ success: true, message: `Class ${code.toUpperCase()} updated.` });
 });
 
 // Delete Class configuration
-app.delete('/api/classes/:classCode', (req, res) => {
+app.delete('/api/classes/:classCode', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || authHeader !== `Bearer ${DEV_TOKEN}`) {
     return res.status(401).json({ success: false, message: 'Unauthorized.' });
   }
   
   const code = req.params.classCode.toLowerCase();
-  const configs = getClassesConfig();
+  const configs = await getClassesConfig();
   
   if (configs[code]) {
     delete configs[code];
-    saveClassesConfig(configs);
+    await saveClassesConfig(configs);
     return res.json({ success: true, message: `Class ${code.toUpperCase()} deleted.` });
   }
   
@@ -343,11 +431,11 @@ app.post('/api/external-verify', apiRateLimiter, async (req, res) => {
 });
 
 // Shift Config API endpoints
-app.get('/api/shifts', (req, res) => {
-  return res.json(getShiftsConfig());
+app.get('/api/shifts', async (req, res) => {
+  return res.json(await getShiftsConfig());
 });
 
-app.post('/api/shifts', (req, res) => {
+app.post('/api/shifts', async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || authHeader !== `Bearer ${DEV_TOKEN}`) {
     return res.status(401).json({ success: false, message: 'Unauthorized.' });
@@ -359,7 +447,7 @@ app.post('/api/shifts', (req, res) => {
   }
 
   const newConfig = { morningStart, morningEnd, afternoonStart, afternoonEnd };
-  saveShiftsConfig(newConfig);
+  await saveShiftsConfig(newConfig);
   return res.json({ success: true, message: 'Shift configuration updated.' });
 });
 
