@@ -48,7 +48,13 @@ const CONFIG = {
   collegeName: "Kamaraj College of Engineering & Technology",
   faceModelsPath: "models",
   firebaseConfig: {
-    // Add Firebase configuration if synchronization is needed
+    apiKey: "AIzaSyANVKvC52Qx-nJM2f-gstVfjcBtPb1YxJE",
+    authDomain: "kcet-attendance.firebaseapp.com",
+    projectId: "kcet-attendance",
+    storageBucket: "kcet-attendance.firebasestorage.app",
+    messagingSenderId: "531484845333",
+    appId: "1:531484845333:web:05c407544c3e976bf0f51c",
+    measurementId: "G-Y181LLDDD9"
   }
 };
 
