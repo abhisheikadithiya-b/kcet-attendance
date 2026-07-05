@@ -1020,7 +1020,8 @@ const state = {
   editStudentId: null,
   campusBoundaryLayer: null,
   tileLayer: null,
-  classesConfig: null
+  classesConfig: null,
+  shiftConfig: null
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -1076,8 +1077,28 @@ async function fetchClassesConfig() {
   }
 }
 
+async function fetchShiftConfig() {
+  try {
+    const res = await fetch('/api/shifts');
+    if (res.ok) {
+      state.shiftConfig = await res.json();
+    }
+  } catch (err) {
+    console.error("Failed to load shifts config from server:", err);
+  }
+  if (!state.shiftConfig) {
+    state.shiftConfig = {
+      morningStart: "08:50",
+      morningEnd: "09:45",
+      afternoonStart: "13:30",
+      afternoonEnd: "14:30"
+    };
+  }
+}
+
 async function init() {
   await fetchClassesConfig();
+  await fetchShiftConfig();
   if (elements.collegeName) elements.collegeName.textContent = CONFIG.collegeName;
   if ($("#year")) $("#year").textContent = new Date().getFullYear();
   if (elements.dateFilter) elements.dateFilter.valueAsDate = new Date();
@@ -1505,11 +1526,24 @@ async function markAttendance(student) {
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
   
-  const morningStart = 8 * 60 + 50; // 8:50 AM
-  const morningEnd = 9 * 60 + 45;   // 9:45 AM
-  
-  const afternoonStart = 13 * 60 + 30; // 1:30 PM
-  const afternoonEnd = 14 * 60 + 30;   // 2:30 PM
+  if (!state.shiftConfig) {
+    state.shiftConfig = {
+      morningStart: "08:50",
+      morningEnd: "09:45",
+      afternoonStart: "13:30",
+      afternoonEnd: "14:30"
+    };
+  }
+
+  const timeToMin = (str) => {
+    const [h, m] = str.split(':').map(Number);
+    return h * 60 + m;
+  };
+
+  const morningStart = timeToMin(state.shiftConfig.morningStart);
+  const morningEnd = timeToMin(state.shiftConfig.morningEnd);
+  const afternoonStart = timeToMin(state.shiftConfig.afternoonStart);
+  const afternoonEnd = timeToMin(state.shiftConfig.afternoonEnd);
 
   let activeShift = null;
   if (currentMinutes >= morningStart && currentMinutes <= morningEnd) {
@@ -1519,8 +1553,20 @@ async function markAttendance(student) {
   }
 
   if (!activeShift) {
-    toast("Check-in Closed", "Check-in is only available during morning shift (8:50 AM - 9:45 AM) or afternoon shift (1:30 PM - 2:30 PM).");
-    showModal("Check-In Closed", "Morning geofence check-in is strictly open from 8:50 AM to 9:45 AM.\nAfternoon geofence check-in is open from 1:30 PM to 2:30 PM.");
+    const format12H = (str) => {
+      const [hStr, mStr] = str.split(':');
+      const h = parseInt(hStr, 10);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const dh = h % 12 || 12;
+      return `${dh}:${mStr} ${ampm}`;
+    };
+    const mStartStr = format12H(state.shiftConfig.morningStart);
+    const mEndStr = format12H(state.shiftConfig.morningEnd);
+    const aStartStr = format12H(state.shiftConfig.afternoonStart);
+    const aEndStr = format12H(state.shiftConfig.afternoonEnd);
+
+    toast("Check-in Closed", `Check-in is only available during morning shift (${mStartStr} - ${mEndStr}) or afternoon shift (${aStartStr} - ${aEndStr}).`);
+    showModal("Check-In Closed", `Morning geofence check-in is strictly open from ${mStartStr} to ${mEndStr}.\nAfternoon geofence check-in is open from ${aStartStr} to ${aEndStr}.`);
     return;
   }
 
