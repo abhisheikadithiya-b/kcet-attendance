@@ -1,3 +1,4 @@
+const express = require('express'); // Required for Vercel static analysis compiler
 const app = require('./api/index');
 const PORT = process.env.PORT || 3000;
 
