@@ -1125,6 +1125,7 @@ function bindEvents() {
   });
   if ($("#themeToggle")) $("#themeToggle").addEventListener("click", toggleTheme);
   if ($("#verifyLocationBtn")) $("#verifyLocationBtn").addEventListener("click", verifyLocation);
+  if ($("#simulateLocationBtn")) $("#simulateLocationBtn").addEventListener("click", simulateLocation);
   if ($("#startCameraBtn")) $("#startCameraBtn").addEventListener("click", startCamera);
   if ($("#exportBtn")) $("#exportBtn").addEventListener("click", exportCsv);
   if ($("#exportTodayBtn")) $("#exportTodayBtn").addEventListener("click", exportTodayCsv);
@@ -1294,13 +1295,14 @@ function verifyLocation() {
     (position) => {
       const { latitude, longitude } = position.coords;
       const config = getActiveConfiguration();
-      const inside = config.polygon 
-        ? isPointInPolygon(latitude, longitude, config.polygon)
-        : (latitude >= config.minLat && latitude <= config.maxLat && longitude >= config.minLon && longitude <= config.maxLon);
-      
       const centerLat = (config.minLat + config.maxLat) / 2;
       const centerLon = (config.minLon + config.maxLon) / 2;
       const distance = getDistanceMeters(latitude, longitude, centerLat, centerLon);
+      
+      // Proximity buffer: Mark student inside if within polygon bounds OR within 30 meters of center
+      const inside = config.polygon 
+        ? (isPointInPolygon(latitude, longitude, config.polygon) || distance <= 30)
+        : (latitude >= config.minLat && latitude <= config.maxLat && longitude >= config.minLon && longitude <= config.maxLon || distance <= 30);
       
       setCampusStatus(inside, latitude, longitude, distance);
       
@@ -1323,6 +1325,40 @@ function verifyLocation() {
     () => setCampusStatus(false, null, null, null, "GPS access denied. Please enable location privileges."),
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
+}
+
+function simulateLocation() {
+  const config = getActiveConfiguration();
+  const centerLat = (config.minLat + config.maxLat) / 2;
+  const centerLon = (config.minLon + config.maxLon) / 2;
+  
+  elements.campusStatus.textContent = "Simulating GPS...";
+  if (elements.gpsIndicator) elements.gpsIndicator.style.background = "var(--warning)";
+  
+  const latitude = centerLat;
+  const longitude = centerLon;
+  const inside = true;
+  const distance = 0;
+  
+  setTimeout(() => {
+    setCampusStatus(true, latitude, longitude, distance, "Simulated classroom presence. Face scan is enabled for automatic check-in.");
+    
+    if (state.map) {
+      if (!state.userMarker) {
+        state.userMarker = L.circleMarker([latitude, longitude], {
+          radius: 6,
+          color: "#ffffff",
+          weight: 2,
+          fillColor: "#2b8a3e",
+          fillOpacity: 1
+        }).addTo(state.map);
+      } else {
+        state.userMarker.setLatLng([latitude, longitude]);
+        state.userMarker.setStyle({ fillColor: "#2b8a3e" });
+      }
+      state.map.setView([latitude, longitude], 19);
+    }
+  }, 500);
 }
 
 function setCampusStatus(inside, latitude, longitude, distance, customMessage) {
