@@ -17,6 +17,43 @@ app.use(express.static(path.join(__dirname, '..')));
 // Config file storage setup
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const CONFIG_FILE = path.join(DATA_DIR, 'classes_config.json');
+const SHIFTS_FILE = path.join(DATA_DIR, 'shifts_config.json');
+
+const defaultShifts = {
+  morningStart: "08:50",
+  morningEnd: "09:45",
+  afternoonStart: "13:30",
+  afternoonEnd: "14:30"
+};
+
+let inMemoryShifts = null;
+
+function getShiftsConfig() {
+  if (inMemoryShifts) return inMemoryShifts;
+  try {
+    if (fs.existsSync(SHIFTS_FILE)) {
+      const data = fs.readFileSync(SHIFTS_FILE, 'utf8');
+      inMemoryShifts = JSON.parse(data);
+      return inMemoryShifts;
+    }
+  } catch (err) {
+    console.warn('Read shifts config failed, using defaults:', err.message);
+  }
+  inMemoryShifts = { ...defaultShifts };
+  return inMemoryShifts;
+}
+
+function saveShiftsConfig(config) {
+  inMemoryShifts = config;
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(SHIFTS_FILE, JSON.stringify(config, null, 2), 'utf8');
+  } catch (err) {
+    console.warn('Persistent shifts config save failed:', err.message);
+  }
+}
 
 const defaultClassesConfig = {
   'd11': {
@@ -81,6 +118,9 @@ try {
   }
   if (!fs.existsSync(CONFIG_FILE)) {
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(defaultClassesConfig, null, 2), 'utf8');
+  }
+  if (!fs.existsSync(SHIFTS_FILE)) {
+    fs.writeFileSync(SHIFTS_FILE, JSON.stringify(defaultShifts, null, 2), 'utf8');
   }
 } catch (err) {
   console.warn('Database initialization skipped on read-only system.');
@@ -300,6 +340,27 @@ app.post('/api/external-verify', apiRateLimiter, async (req, res) => {
     engine: 'Local Engine',
     message: 'No cloud keys configured. Using local high-accuracy SSD Mobilenet v1 AI model.'
   });
+});
+
+// Shift Config API endpoints
+app.get('/api/shifts', (req, res) => {
+  return res.json(getShiftsConfig());
+});
+
+app.post('/api/shifts', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || authHeader !== `Bearer ${DEV_TOKEN}`) {
+    return res.status(401).json({ success: false, message: 'Unauthorized.' });
+  }
+
+  const { morningStart, morningEnd, afternoonStart, afternoonEnd } = req.body;
+  if (!morningStart || !morningEnd || !afternoonStart || !afternoonEnd) {
+    return res.status(400).json({ success: false, message: 'All shift times are required.' });
+  }
+
+  const newConfig = { morningStart, morningEnd, afternoonStart, afternoonEnd };
+  saveShiftsConfig(newConfig);
+  return res.json({ success: true, message: 'Shift configuration updated.' });
 });
 
 if (process.env.NODE_ENV !== 'production' && require.main === module) {
