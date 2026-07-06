@@ -1851,27 +1851,53 @@ async function captureFaceAngle() {
   ctx.drawImage(regVideo, 0, 0, canvas.width, canvas.height);
   const snapshot = canvas.toDataURL("image/jpeg");
 
-  state.captureAngles = Math.min(state.captureAngles + 1, 3);
+  // Immediately run face detection on the captured snapshot image
+  const img = document.createElement("img");
+  img.src = snapshot;
   
-  if (!state.capturedSnapshots) state.capturedSnapshots = [];
-  state.capturedSnapshots[state.captureAngles - 1] = snapshot;
+  setScanStatus("Analyzing angle...", "Extracting biometric facial coordinates...");
+  
+  img.onload = async () => {
+    try {
+      const detection = await faceapi.detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }))
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+        
+      if (!detection) {
+        toast("Face Not Found", "Please align your face directly with the camera overlay and recapture.", "warning");
+        setScanStatus("Capture Failed", "Ensure your face is clearly visible inside the box.");
+        return;
+      }
+      
+      state.captureAngles = Math.min(state.captureAngles + 1, 3);
+      if (!state.capturedSnapshots) state.capturedSnapshots = [];
+      state.capturedSnapshots[state.captureAngles - 1] = snapshot;
+      
+      if (!state.currentRegistrationDescriptors) state.currentRegistrationDescriptors = [];
+      state.currentRegistrationDescriptors[state.captureAngles - 1] = Array.from(detection.descriptor);
 
-  const slot = $(`#thumbSlot${state.captureAngles}`);
-  if (slot) {
-    slot.innerHTML = `
-      <span class="thumb-label">Angle ${state.captureAngles}</span>
-      <img src="${snapshot}" alt="Angle ${state.captureAngles}">
-    `;
-  }
+      const slot = $(`#thumbSlot${state.captureAngles}`);
+      if (slot) {
+        slot.innerHTML = `
+          <span class="thumb-label">Angle ${state.captureAngles}</span>
+          <img src="${snapshot}" alt="Angle ${state.captureAngles}">
+        `;
+      }
 
-  elements.captureCount.textContent = state.captureAngles;
-  $$(".capture-guide li").forEach((item, index) => item.classList.toggle("active", index === state.captureAngles));
-  toast("Capture Successful", `Angle ${state.captureAngles} of 3 recorded.`);
+      elements.captureCount.textContent = state.captureAngles;
+      $$(".capture-guide li").forEach((item, index) => item.classList.toggle("active", index === state.captureAngles));
+      toast("Capture Successful", `Angle ${state.captureAngles} of 3 recorded.`);
+      setScanStatus("Biometrics extracted", `Angle ${state.captureAngles} ready.`);
 
-  if (state.captureAngles === 3) {
-    $("#captureFaceBtn").classList.add("hidden");
-    $("#approvalControls").classList.remove("hidden");
-  }
+      if (state.captureAngles === 3) {
+        $("#captureFaceBtn").classList.add("hidden");
+        $("#approvalControls").classList.remove("hidden");
+      }
+    } catch (err) {
+      console.error("Face detection on snapshot failed:", err);
+      toast("Capture Error", "Failed to extract face template.");
+    }
+  };
 }
 
 function approveCaptures() {
@@ -1883,6 +1909,7 @@ function approveCaptures() {
 function retryCaptures() {
   state.captureAngles = 0;
   state.capturedSnapshots = [];
+  state.currentRegistrationDescriptors = [];
   elements.captureCount.textContent = "0";
   
   for (let i = 1; i <= 3; i++) {
@@ -1944,14 +1971,13 @@ async function saveRegisteredFace() {
   }
 
   const regVideo = $("#regVideo");
-  if (state.faceModelsReady && state.cameraActive && regVideo && state.captureAngles === 3) {
-    const detection = await faceapi
-      .detectSingleFace(regVideo, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
-      .withFaceLandmarks()
-      .withFaceDescriptor();
-    if (detection) {
-      state.descriptors[id] = Array.from(detection.descriptor);
-    }
+  if (state.currentRegistrationDescriptors && state.currentRegistrationDescriptors.length > 0) {
+    const numDescriptors = state.currentRegistrationDescriptors.length;
+    const avgDescriptor = Array.from({ length: 128 }, (_, index) => {
+      const sum = state.currentRegistrationDescriptors.reduce((acc, desc) => acc + desc[index], 0);
+      return sum / numDescriptors;
+    });
+    state.descriptors[id] = avgDescriptor;
   } else if (!state.descriptors[id]) {
     state.descriptors[id] = createSampleDescriptor(id);
   }
