@@ -1208,8 +1208,40 @@ async function initFirebase() {
     firebase.initializeApp(CONFIG.firebaseConfig);
     state.db = firebase.firestore();
     toast("Firebase connected", "Student attendance will sync with Firestore.");
+    await syncRegistryFromCloud();
   } catch (error) {
     toast("Firebase skipped", "Offline local storage mode enabled.");
+  }
+}
+
+async function syncRegistryFromCloud() {
+  if (!state.db) return;
+  try {
+    const snapshot = await state.db.collection("students").get();
+    const cloudStudents = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      cloudStudents.push({
+        id: data.id,
+        name: data.name,
+        studentId: data.studentId,
+        dept: data.dept,
+        year: data.year,
+        percent: 100
+      });
+      if (data.descriptor) {
+        state.descriptors[data.id] = data.descriptor;
+      }
+    });
+    
+    if (cloudStudents.length > 0) {
+      localStorage.setItem("customStudentsList", JSON.stringify(cloudStudents));
+      localStorage.setItem("studentFaceDescriptors", JSON.stringify(state.descriptors));
+      if (elements.attendanceTable) renderAttendanceTable();
+      updateStats();
+    }
+  } catch (err) {
+    console.error("Failed to sync registry from Firestore:", err);
   }
 }
 
@@ -1744,6 +1776,7 @@ function renderAttendanceTable() {
         </td>
         <td>
           <div class="actions-cell">
+            <button class="icon-btn" onclick="viewStudentPhotos('${student.id}')" type="button" style="background: var(--accent); color: white;">Photos</button>
             <button class="icon-btn edit-btn" onclick="editStudent('${student.id}')" type="button">Edit</button>
             <button class="icon-btn delete-btn" onclick="deleteStudent('${student.id}')" type="button">Delete</button>
           </div>
@@ -1924,6 +1957,23 @@ async function saveRegisteredFace() {
   }
 
   localStorage.setItem("studentFaceDescriptors", JSON.stringify(state.descriptors));
+  
+  if (state.db) {
+    try {
+      await state.db.collection("students").doc(id).set({
+        id,
+        name,
+        studentId,
+        dept,
+        year,
+        descriptor: state.descriptors[id] || null,
+        photos: state.capturedSnapshots || []
+      });
+      toast("Cloud Sync", "Student registry and photos updated in Firebase.");
+    } catch (err) {
+      console.error("Cloud registration sync failed:", err);
+    }
+  }
   
   resetRegistrationForm();
   renderAttendanceTable();
@@ -2443,6 +2493,10 @@ window.deleteStudent = function(id) {
       localStorage.setItem("studentFaceDescriptors", JSON.stringify(state.descriptors));
     }
 
+    if (state.db) {
+      state.db.collection("students").doc(id).delete().catch(err => console.error("Firestore deletion failed:", err));
+    }
+
     if (state.editMode && state.editStudentId === id) {
       resetRegistrationForm();
     }
@@ -2498,4 +2552,45 @@ window.toggleAfternoonStatus = function(studentId) {
   renderAttendanceTable();
   updateStats();
   toast("Shift Toggled", "Student afternoon attendance status updated.");
+};
+
+window.viewStudentPhotos = async function(id) {
+  if (!state.db) {
+    toast("Offline Mode", "Please connect Firebase Firestore to view saved face photos.");
+    return;
+  }
+  toast("Loading Photos", "Retrieving face angle snapshots from cloud...");
+  try {
+    const doc = await state.db.collection("students").doc(id).get();
+    if (doc.exists && doc.data().photos && doc.data().photos.length > 0) {
+      const photos = doc.data().photos;
+      showPhotoViewerModal(doc.data().name, photos);
+    } else {
+      toast("No Photos", "No facial snapshots exist for this student.");
+    }
+  } catch (err) {
+    toast("Load Failed", "Error fetching photos from database.");
+  }
+};
+
+function showPhotoViewerModal(name, photos) {
+  const modal = document.getElementById("photoViewerModal");
+  const title = document.getElementById("photoModalTitle");
+  const grid = document.getElementById("photoGrid");
+  if (!modal || !grid) return;
+  
+  title.textContent = `${name}'s Face Angles`;
+  grid.innerHTML = photos.map((src, i) => `
+    <div style="flex: 1; text-align: center; border: 1px solid var(--line); border-radius: 6px; padding: 4px; background: var(--bg-2);">
+      <small style="display: block; margin-bottom: 4px; color: var(--muted); font-size: 0.65rem;">Angle ${i + 1}</small>
+      <img src="${src}" alt="Angle ${i + 1}" style="width: 100%; height: auto; border-radius: 4px; object-fit: cover;">
+    </div>
+  `).join("");
+  
+  modal.style.display = "flex";
+}
+
+window.closePhotoModal = function() {
+  const modal = document.getElementById("photoViewerModal");
+  if (modal) modal.style.display = "none";
 };
