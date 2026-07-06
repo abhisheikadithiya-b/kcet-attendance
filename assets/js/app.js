@@ -1591,6 +1591,13 @@ async function markAttendance(student) {
     return;
   }
 
+  // Throttle scanner: prevent alert spam if scanned multiple times in a row
+  const timestamp = Date.now();
+  if (state.lastScannedStudent && state.lastScannedStudent.id === student.id && (timestamp - state.lastScannedStudent.time < 8000)) {
+    return;
+  }
+  state.lastScannedStudent = { id: student.id, time: timestamp };
+
   // Timing check: Morning vs Afternoon Shift check-ins
   const now = new Date();
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
