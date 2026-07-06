@@ -1299,6 +1299,7 @@ async function loadFaceModels() {
     setScanStatus("Loading AI models", "Initializing face detection engines...");
     await Promise.all([
       faceapi.nets.ssdMobilenetv1.loadFromUri(CONFIG.faceModelsPath),
+      faceapi.nets.tinyFaceDetector.loadFromUri(CONFIG.faceModelsPath),
       faceapi.nets.faceLandmark68Net.loadFromUri(CONFIG.faceModelsPath),
       faceapi.nets.faceRecognitionNet.loadFromUri(CONFIG.faceModelsPath)
     ]);
@@ -1502,7 +1503,7 @@ function resizeCanvas() {
 
 function startFaceDetection() {
   clearInterval(state.detectionTimer);
-  const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 });
+  const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 });
 
   state.detectionTimer = setInterval(async () => {
     if (!state.cameraActive) return;
@@ -1551,7 +1552,7 @@ function startFaceDetection() {
       regCtx.clearRect(0, 0, regCanvas.width, regCanvas.height);
       regResized.forEach((result) => drawFaceBox(regCtx, result.detection.box));
     }
-  }, 1800);
+  }, 350);
 }
 
 function drawFaceBox(ctx, box) {
