@@ -46,7 +46,7 @@ const defaultClassesConfig = {
 
 const CONFIG = {
   collegeName: "Kamaraj College of Engineering & Technology",
-  faceModelsPath: "models",
+  faceModelsPath: "/models",
   firebaseConfig: {
     apiKey: "AIzaSyANVKvC52Qx-nJM2f-gstVfjcBtPb1YxJE",
     authDomain: "kcet-attendance.firebaseapp.com",
