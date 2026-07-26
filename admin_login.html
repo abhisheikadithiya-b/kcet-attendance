@@ -11,6 +11,11 @@
   <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="manifest" href="manifest.json">
   <script defer src="assets/js/app.js"></script>
+  <!-- Sentry Error Monitoring -->
+  <script
+    src="https://js.sentry-cdn.com/3bb7ce58ea2c267d9f4e41393082048e.min.js"
+    crossorigin="anonymous"
+  ></script>
   <style>
     .admin-login-wrapper {
       min-height: 100vh;
@@ -105,6 +110,7 @@
         if (res.ok && data.success) {
           sessionStorage.setItem('isAdmin', 'true');
           sessionStorage.setItem('adminClass', cls);
+          if (data.adminToken) sessionStorage.setItem('adminToken', data.adminToken);
           window.location.href = 'register.html';
         } else {
           document.getElementById('loginError').textContent = data.message || 'Incorrect password. Please try again.';

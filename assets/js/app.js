@@ -58,952 +58,7 @@ const CONFIG = {
   }
 };
 
-const students = [
-  {
-    "id": "std-25uad001",
-    "name": "ASHOK KUMAR A",
-    "studentId": "25UAD001",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad004",
-    "name": "VAISHNAVI K V",
-    "studentId": "25UAD004",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad008",
-    "name": "NISHANTH M",
-    "studentId": "25UAD008",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad009",
-    "name": "KISHORE K",
-    "studentId": "25UAD009",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad015",
-    "name": "DHARUN PANDI J",
-    "studentId": "25UAD015",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad016",
-    "name": "MOHAMED SHARUK H",
-    "studentId": "25UAD016",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad017",
-    "name": "VIJAYA VAHINI L",
-    "studentId": "25UAD017",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad019",
-    "name": "RAGUL C",
-    "studentId": "25UAD019",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad020",
-    "name": "ASHOKKUMAR S",
-    "studentId": "25UAD020",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad021",
-    "name": "CHITRA J K",
-    "studentId": "25UAD021",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad022",
-    "name": "MEENAKSHISUNDARAM S",
-    "studentId": "25UAD022",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad024",
-    "name": "NAGANANDIKA DEVI J",
-    "studentId": "25UAD024",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad026",
-    "name": "BENITTA YAZHINI.M",
-    "studentId": "25UAD026",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad029",
-    "name": "NITHISWARAN M",
-    "studentId": "25UAD029",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad031",
-    "name": "SRI AISHWARYA D",
-    "studentId": "25UAD031",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad032",
-    "name": "ABHISHEIK ADITHIYA B",
-    "studentId": "25UAD032",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad034",
-    "name": "MARIYA VINNARASI N",
-    "studentId": "25UAD034",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad037",
-    "name": "BAVITHRA R",
-    "studentId": "25UAD037",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad039",
-    "name": "NITHISHKUMAR S",
-    "studentId": "25UAD039",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad040",
-    "name": "SATHARA KEERTHI A",
-    "studentId": "25UAD040",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad042",
-    "name": "RAJKUMAR I",
-    "studentId": "25UAD042",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad043",
-    "name": "SUMAN S",
-    "studentId": "25UAD043",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad044",
-    "name": "VAISHNAVI S",
-    "studentId": "25UAD044",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad047",
-    "name": "MARIYA DHARSHINI C",
-    "studentId": "25UAD047",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad049",
-    "name": "SINDHUJA N",
-    "studentId": "25UAD049",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad051",
-    "name": "ROHITH KANNA P",
-    "studentId": "25UAD051",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad053",
-    "name": "PRIYADHARSHINI M",
-    "studentId": "25UAD053",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad057",
-    "name": "THANGAROJA V",
-    "studentId": "25UAD057",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad058",
-    "name": "RAGAVI R",
-    "studentId": "25UAD058",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad060",
-    "name": "AKSHAYA G",
-    "studentId": "25UAD060",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad064",
-    "name": "JAYASRI R",
-    "studentId": "25UAD064",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad066",
-    "name": "SIMSON A",
-    "studentId": "25UAD066",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad067",
-    "name": "HARIHARAN MUTHU M",
-    "studentId": "25UAD067",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad070",
-    "name": "PADHMAVATHI P",
-    "studentId": "25UAD070",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad071",
-    "name": "PREETHI SRI P",
-    "studentId": "25UAD071",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad072",
-    "name": "KEERTHI NARAYANAN R",
-    "studentId": "25UAD072",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad073",
-    "name": "MUFITHA.A",
-    "studentId": "25UAD073",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad078",
-    "name": "MIRUTHULA A",
-    "studentId": "25UAD078",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad079",
-    "name": "SHIVAPANDI M",
-    "studentId": "25UAD079",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad080",
-    "name": "KAVYA K",
-    "studentId": "25UAD080",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad083",
-    "name": "MATHIVATHANI I",
-    "studentId": "25UAD083",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad084",
-    "name": "SHANTHINI S",
-    "studentId": "25UAD084",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad085",
-    "name": "VIJAYADHARSHINI S",
-    "studentId": "25UAD085",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad087",
-    "name": "AFREEN S A",
-    "studentId": "25UAD087",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad088",
-    "name": "HARI BALAJI S",
-    "studentId": "25UAD088",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad089",
-    "name": "GOMATHI SUBBULAKSHMI.S",
-    "studentId": "25UAD089",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad092",
-    "name": "JAYAKUMAR S",
-    "studentId": "25UAD092",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad093",
-    "name": "DHEEKSHA P",
-    "studentId": "25UAD093",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad096",
-    "name": "KISHORE K",
-    "studentId": "25UAD096",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad099",
-    "name": "THANGA SANTHIYA S R",
-    "studentId": "25UAD099",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad102",
-    "name": "BALAGANESH D",
-    "studentId": "25UAD102",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad103",
-    "name": "RUTHRAVEL S",
-    "studentId": "25UAD103",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad106",
-    "name": "NITHYA SRI.S",
-    "studentId": "25UAD106",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad108",
-    "name": "ANBUMANI S A",
-    "studentId": "25UAD108",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad109",
-    "name": "VEERA LAKSHMI B",
-    "studentId": "25UAD109",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad111",
-    "name": "SATTHI DEV M",
-    "studentId": "25UAD111",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad113",
-    "name": "HEMA SREE K",
-    "studentId": "25UAD113",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad116",
-    "name": "PRAJAPATHI.C.M",
-    "studentId": "25UAD116",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad119",
-    "name": "KANISHKRAJADURAI J",
-    "studentId": "25UAD119",
-    "dept": "ADS",
-    "year": "d11",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad002",
-    "name": "BAHIRATHAN JAYAKUMAR S",
-    "studentId": "25UAD002",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad003",
-    "name": "ROHITH D R",
-    "studentId": "25UAD003",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad005",
-    "name": "LATHIKA SHRI S",
-    "studentId": "25UAD005",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad006",
-    "name": "THANGARAJ S",
-    "studentId": "25UAD006",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad007",
-    "name": "ASHIKA P",
-    "studentId": "25UAD007",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad010",
-    "name": "RAJALAKSHMI R",
-    "studentId": "25UAD010",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad011",
-    "name": "DIVYA M",
-    "studentId": "25UAD011",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad012",
-    "name": "LOGA SOWMIYA S",
-    "studentId": "25UAD012",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad013",
-    "name": "DHANA VARSHINI S",
-    "studentId": "25UAD013",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad014",
-    "name": "YOGA DHARSHINI G.S",
-    "studentId": "25UAD014",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad018",
-    "name": "RAGHAVAKRISHNAN R",
-    "studentId": "25UAD018",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad023",
-    "name": "JASMITTA C",
-    "studentId": "25UAD023",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad025",
-    "name": "POOJA SRI S",
-    "studentId": "25UAD025",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad027",
-    "name": "AKILAN M",
-    "studentId": "25UAD027",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad028",
-    "name": "ASHIK MOHAMED N",
-    "studentId": "25UAD028",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad030",
-    "name": "SABARIAYYAN P",
-    "studentId": "25UAD030",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad033",
-    "name": "MADHANKUMAR S",
-    "studentId": "25UAD033",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad035",
-    "name": "PRANESH MANICKAM V",
-    "studentId": "25UAD035",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad036",
-    "name": "PRAVEEN M",
-    "studentId": "25UAD036",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad038",
-    "name": "SRIHEMAVATHI S",
-    "studentId": "25UAD038",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad041",
-    "name": "DHARSHAN M",
-    "studentId": "25UAD041",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad045",
-    "name": "SAKTHESWARAN M",
-    "studentId": "25UAD045",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad046",
-    "name": "ARCHANA M",
-    "studentId": "25UAD046",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad048",
-    "name": "SAHANA.S",
-    "studentId": "25UAD048",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad050",
-    "name": "VISHALINI J P",
-    "studentId": "25UAD050",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad052",
-    "name": "SRI NARAYANI B",
-    "studentId": "25UAD052",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad054",
-    "name": "MADHUMITHA S",
-    "studentId": "25UAD054",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad055",
-    "name": "VETHIKA L",
-    "studentId": "25UAD055",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad056",
-    "name": "RAJALAKSHMI R",
-    "studentId": "25UAD056",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad059",
-    "name": "DEEPANKUMAR S",
-    "studentId": "25UAD059",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad061",
-    "name": "NIVETHITHA S",
-    "studentId": "25UAD061",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad062",
-    "name": "SANJAI K",
-    "studentId": "25UAD062",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad063",
-    "name": "HARINI S",
-    "studentId": "25UAD063",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad065",
-    "name": "MOHAMMED YASIR A",
-    "studentId": "25UAD065",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad068",
-    "name": "PAVITHRA B",
-    "studentId": "25UAD068",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad069",
-    "name": "SHALINI S",
-    "studentId": "25UAD069",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad074",
-    "name": "KARTHIKEYA Y",
-    "studentId": "25UAD074",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad075",
-    "name": "MUKESH PRASANNA.M",
-    "studentId": "25UAD075",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad076",
-    "name": "THATCHINA MOORTHY.T",
-    "studentId": "25UAD076",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad077",
-    "name": "HAJMATHUL HASHINA.A",
-    "studentId": "25UAD077",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad081",
-    "name": "KIRUTHIGA P",
-    "studentId": "25UAD081",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad082",
-    "name": "RESHMA S",
-    "studentId": "25UAD082",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad086",
-    "name": "VAIRAMUTHU P",
-    "studentId": "25UAD086",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad090",
-    "name": "NARAYANASAMY P",
-    "studentId": "25UAD090",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad091",
-    "name": "ROHINI.T",
-    "studentId": "25UAD091",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad094",
-    "name": "ABITHRA P",
-    "studentId": "25UAD094",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad095",
-    "name": "SURYAPRAKASH S",
-    "studentId": "25UAD095",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad097",
-    "name": "PRAVEEN.K",
-    "studentId": "25UAD097",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad098",
-    "name": "RAKSHANA.S",
-    "studentId": "25UAD098",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad100",
-    "name": "MONISHA M",
-    "studentId": "25UAD100",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad104",
-    "name": "PONANANTHAN M",
-    "studentId": "25UAD104",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad105",
-    "name": "MANASHA.M",
-    "studentId": "25UAD105",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad107",
-    "name": "HARIS M",
-    "studentId": "25UAD107",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad110",
-    "name": "SUMAIYAH M",
-    "studentId": "25UAD110",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad112",
-    "name": "JEFFERSON J",
-    "studentId": "25UAD112",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad114",
-    "name": "RAKAVI K",
-    "studentId": "25UAD114",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad115",
-    "name": "HAASHINI A",
-    "studentId": "25UAD115",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad117",
-    "name": "YOGESHWARI S",
-    "studentId": "25UAD117",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  },
-  {
-    "id": "std-25uad120",
-    "name": "HARSHINI C",
-    "studentId": "25UAD120",
-    "dept": "ADS",
-    "year": "d12",
-    "percent": 95
-  }
-];
+const students = [];
 
 const state = {
   insideCampus: false,
@@ -1021,7 +76,9 @@ const state = {
   campusBoundaryLayer: null,
   tileLayer: null,
   classesConfig: null,
-  shiftConfig: null
+  shiftConfig: null,
+  scanLocked: false,
+  matchLog: JSON.parse(localStorage.getItem("matchDebugLog") || "[]")
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -1112,6 +169,10 @@ async function init() {
   bindEvents();
   if (elements.attendanceTable) renderAttendanceTable();
   if (elements.totalStudents) updateStats();
+  if (window.location.pathname.includes('register.html')) {
+    renderActiveLinks();
+    renderPendingQueue();
+  }
   loadFaceModels();
   initPwa();
   updateCameraStateRestriction();
@@ -1207,6 +268,9 @@ async function initFirebase() {
   try {
     firebase.initializeApp(CONFIG.firebaseConfig);
     state.db = firebase.firestore();
+    if (window.firebase.storage) {
+      state.storage = firebase.storage();
+    }
     toast("Firebase connected", "Student attendance will sync with Firestore.");
     await syncRegistryFromCloud();
   } catch (error) {
@@ -1215,53 +279,71 @@ async function initFirebase() {
 }
 
 async function syncRegistryFromCloud() {
-  if (!state.db) return;
-  try {
-    const snapshot = await state.db.collection("students").get();
-    const cloudStudents = [];
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      cloudStudents.push({
-        id: data.id,
-        name: data.name,
-        studentId: data.studentId,
-        dept: data.dept,
-        year: data.year,
-        percent: 100
+  const adminToken = sessionStorage.getItem('adminToken');
+  const adminClass = sessionStorage.getItem('adminClass') || "";
+  
+  if (adminToken) {
+    try {
+      const res = await fetch(`/api/admin/students?classCode=${adminClass}`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
       });
-      if (data.descriptor) {
-        state.descriptors[data.id] = data.descriptor;
+      if (res.ok) {
+        const data = await res.json();
+        if (data.students && Array.isArray(data.students)) {
+          localStorage.setItem("customStudentsList", JSON.stringify(data.students));
+        }
+        if (data.descriptors) {
+          state.descriptors = { ...state.descriptors, ...data.descriptors };
+          localStorage.setItem("studentFaceDescriptors", JSON.stringify(state.descriptors));
+        }
+        if (elements.attendanceTable) renderAttendanceTable();
+        updateStats();
       }
-    });
-    
-    if (cloudStudents.length > 0) {
-      localStorage.setItem("customStudentsList", JSON.stringify(cloudStudents));
-      localStorage.setItem("studentFaceDescriptors", JSON.stringify(state.descriptors));
-      if (elements.attendanceTable) renderAttendanceTable();
-      updateStats();
+    } catch (err) {
+      console.warn("Admin sync registry proxy error:", err);
     }
-  } catch (err) {
-    console.error("Failed to sync registry from Firestore:", err);
+  }
+
+  // Fetch public attendance records for today
+  try {
+    const todayStr = elements.dateFilter ? elements.dateFilter.value : new Date().toISOString().split('T')[0];
+    const attRes = await fetch(`/api/attendance?dateKey=${todayStr}`);
+    if (attRes.ok) {
+      const attData = await attRes.json();
+      if (attData.records) {
+        state.attendance[attData.dateKey] = { ...state.attendance[attData.dateKey], ...attData.records };
+        localStorage.setItem("studentAttendanceRecords", JSON.stringify(state.attendance));
+        if (elements.attendanceTable) renderAttendanceTable();
+        updateStats();
+      }
+    }
+  } catch (attErr) {
+    console.warn("Public attendance fetch error:", attErr);
   }
 }
 
 function initMap() {
   if (!$("#mapView") || !window.L) return;
-  const config = getActiveConfiguration();
-  const centerLat = (config.minLat + config.maxLat) / 2;
-  const centerLon = (config.minLon + config.maxLon) / 2;
+  const config = getActiveConfiguration(true);
+  const defaultCenter = [9.67343, 77.96478]; // Campus fallback center
+  const centerLat = config ? (config.minLat + config.maxLat) / 2 : defaultCenter[0];
+  const centerLon = config ? (config.minLon + config.maxLon) / 2 : defaultCenter[1];
   
-  state.map = L.map('mapView', { maxZoom: 20, zoomControl: false }).setView([centerLat, centerLon], 19);
-  
-  const isDark = document.body.classList.contains("dark-mode");
-  const tileUrl = isDark 
-    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' 
-    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  if (!state.map) {
+    state.map = L.map('mapView', { maxZoom: 20, zoomControl: false }).setView([centerLat, centerLon], 19);
     
-  state.tileLayer = L.tileLayer(tileUrl, {
-      maxZoom: 20,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-  }).addTo(state.map);
+    const isDark = document.body.classList.contains("dark-mode");
+    const tileUrl = isDark 
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' 
+      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+      
+    state.tileLayer = L.tileLayer(tileUrl, {
+        maxZoom: 20,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    }).addTo(state.map);
+  } else if (config) {
+    state.map.setView([centerLat, centerLon], 19);
+  }
   
   drawBoundaryOnMap();
 }
@@ -1270,7 +352,9 @@ function drawBoundaryOnMap() {
   if (!state.map) return;
   if (state.campusBoundaryLayer) state.map.removeLayer(state.campusBoundaryLayer);
   
-  const config = getActiveConfiguration();
+  const config = getActiveConfiguration(true);
+  if (!config) return;
+
   const greenStyle = {
     color: "#10ac84",
     weight: 3,
@@ -1326,33 +410,40 @@ function verifyLocation() {
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
-      const { latitude, longitude } = position.coords;
-      const config = getActiveConfiguration();
-      const centerLat = (config.minLat + config.maxLat) / 2;
-      const centerLon = (config.minLon + config.maxLon) / 2;
-      const distance = getDistanceMeters(latitude, longitude, centerLat, centerLon);
-      
-      // Proximity buffer: Mark student inside if within polygon bounds OR within 30 meters of center
-      const inside = config.polygon 
-        ? (isPointInPolygon(latitude, longitude, config.polygon) || distance <= 30)
-        : (latitude >= config.minLat && latitude <= config.maxLat && longitude >= config.minLon && longitude <= config.maxLon || distance <= 30);
-      
-      setCampusStatus(inside, latitude, longitude, distance);
-      
-      if (state.map) {
-        if (!state.userMarker) {
-          state.userMarker = L.circleMarker([latitude, longitude], {
-            radius: 6,
-            color: "#ffffff",
-            weight: 2,
-            fillColor: inside ? "#2b8a3e" : "#c92a2a",
-            fillOpacity: 1
-          }).addTo(state.map);
-        } else {
-          state.userMarker.setLatLng([latitude, longitude]);
-          state.userMarker.setStyle({ fillColor: inside ? "#2b8a3e" : "#c92a2a" });
+      try {
+        const { latitude, longitude } = position.coords;
+        const config = getActiveConfiguration();
+        if (!config) return; // getActiveConfiguration already showed error
+        const centerLat = (config.minLat + config.maxLat) / 2;
+        const centerLon = (config.minLon + config.maxLon) / 2;
+        const distance = getDistanceMeters(latitude, longitude, centerLat, centerLon);
+        
+        // Proximity buffer: Mark student inside if within polygon bounds OR within 30 meters of center
+        const inside = config.polygon 
+          ? (isPointInPolygon(latitude, longitude, config.polygon) || distance <= 30)
+          : (latitude >= config.minLat && latitude <= config.maxLat && longitude >= config.minLon && longitude <= config.maxLon || distance <= 30);
+        
+        setCampusStatus(inside, latitude, longitude, distance);
+        
+        if (state.map) {
+          if (!state.userMarker) {
+            state.userMarker = L.circleMarker([latitude, longitude], {
+              radius: 6,
+              color: "#ffffff",
+              weight: 2,
+              fillColor: inside ? "#2b8a3e" : "#c92a2a",
+              fillOpacity: 1
+            }).addTo(state.map);
+          } else {
+            state.userMarker.setLatLng([latitude, longitude]);
+            state.userMarker.setStyle({ fillColor: inside ? "#2b8a3e" : "#c92a2a" });
+          }
+          state.map.setView([latitude, longitude], 19);
         }
-        state.map.setView([latitude, longitude], 19);
+      } catch (err) {
+        console.error("GPS verification error:", err);
+        if (typeof Sentry !== 'undefined') Sentry.captureException(err);
+        setCampusStatus(false, null, null, null, "GPS verification failed unexpectedly.");
       }
     },
     () => setCampusStatus(false, null, null, null, "GPS access denied. Please enable location privileges."),
@@ -1362,6 +453,7 @@ function verifyLocation() {
 
 function simulateLocation() {
   const config = getActiveConfiguration();
+  if (!config) return;
   const centerLat = (config.minLat + config.maxLat) / 2;
   const centerLon = (config.minLon + config.maxLon) / 2;
   
@@ -1503,54 +595,66 @@ function resizeCanvas() {
 
 function startFaceDetection() {
   clearInterval(state.detectionTimer);
+  state.scanLocked = false;
   const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 });
 
   state.detectionTimer = setInterval(async () => {
     if (!state.cameraActive) return;
 
-    resizeCanvas();
+    try {
+      resizeCanvas();
 
-    // 1. Process main check-in screen
-    if (elements.video && !elements.video.paused && !elements.video.ended) {
-      const detections = await faceapi
-        .detectAllFaces(elements.video, options)
-        .withFaceLandmarks()
-        .withFaceDescriptors();
+      // 1. Process main check-in screen
+      if (elements.video && !elements.video.paused && !elements.video.ended) {
+        // Session lock: skip matching after successful check-in
+        if (state.scanLocked) {
+          setScanStatus("Check-in complete", "Camera locked. Restart camera for next student.");
+          return;
+        }
 
-      const displaySize = { width: elements.canvas.width, height: elements.canvas.height };
-      const resized = faceapi.resizeResults(detections, displaySize);
-      const ctx = elements.canvas.getContext("2d");
-      ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
-      resized.forEach((result) => drawFaceBox(ctx, result.detection.box));
+        const detections = await faceapi
+          .detectAllFaces(elements.video, options)
+          .withFaceLandmarks()
+          .withFaceDescriptors();
 
-      if (detections.length === 0) {
-        setScanStatus("No face detected", "Align your face with the camera lens.");
-      } else if (detections.length > 1) {
-        setScanStatus("Multiple faces detected", "Ensure only one student stands in view.");
-        toast("Scan Paused", "Multiple faces detected.");
-      } else {
-        const matchedStudent = matchStudent(detections[0].descriptor);
-        if (!matchedStudent) {
-          setScanStatus("Unregistered Profile", "Student record not found in system storage.");
+        const displaySize = { width: elements.canvas.width, height: elements.canvas.height };
+        const resized = faceapi.resizeResults(detections, displaySize);
+        const ctx = elements.canvas.getContext("2d");
+        ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+        resized.forEach((result) => drawFaceBox(ctx, result.detection.box));
+
+        if (detections.length === 0) {
+          setScanStatus("No face detected", "Align your face with the camera lens.");
+        } else if (detections.length > 1) {
+          setScanStatus("Multiple faces detected", "Ensure only one student stands in view.");
+          toast("Scan Paused", "Multiple faces detected.");
         } else {
-          setScanStatus("Match Identified", `Identified: ${matchedStudent.name}. Checking bounds...`);
-          await markAttendance(matchedStudent);
+          const matchedStudent = matchStudent(detections[0].descriptor);
+          if (!matchedStudent) {
+            setScanStatus("Unregistered Profile", "Student record not found in system storage.");
+          } else {
+            setScanStatus("Match Identified", `Identified: ${matchedStudent.name}. Checking bounds...`);
+            await markAttendance(matchedStudent);
+          }
         }
       }
-    }
 
-    // 2. Process Registration Outline Drawing
-    const regVideo = $("#regVideo");
-    const regCanvas = $("#regOverlayCanvas");
-    if (regVideo && regCanvas && !regVideo.paused && !regVideo.ended) {
-      const regDetections = await faceapi
-        .detectAllFaces(regVideo, options)
-        .withFaceLandmarks();
-      const regDisplaySize = { width: regCanvas.width, height: regCanvas.height };
-      const regResized = faceapi.resizeResults(regDetections, regDisplaySize);
-      const regCtx = regCanvas.getContext("2d");
-      regCtx.clearRect(0, 0, regCanvas.width, regCanvas.height);
-      regResized.forEach((result) => drawFaceBox(regCtx, result.detection.box));
+      // 2. Process Registration Outline Drawing
+      const regVideo = $("#regVideo");
+      const regCanvas = $("#regOverlayCanvas");
+      if (regVideo && regCanvas && !regVideo.paused && !regVideo.ended) {
+        const regDetections = await faceapi
+          .detectAllFaces(regVideo, options)
+          .withFaceLandmarks();
+        const regDisplaySize = { width: regCanvas.width, height: regCanvas.height };
+        const regResized = faceapi.resizeResults(regDetections, regDisplaySize);
+        const regCtx = regCanvas.getContext("2d");
+        regCtx.clearRect(0, 0, regCanvas.width, regCanvas.height);
+        regResized.forEach((result) => drawFaceBox(regCtx, result.detection.box));
+      }
+    } catch (err) {
+      console.error("Face detection loop error:", err);
+      if (typeof Sentry !== 'undefined') Sentry.captureException(err);
     }
   }, 350);
 }
@@ -1563,137 +667,209 @@ function drawFaceBox(ctx, box) {
 
 function matchStudent(descriptor) {
   const entries = Object.entries(state.descriptors);
-  if (!entries.length) return null;
+  if (!entries.length) {
+    console.log('[FaceMatch] No descriptors registered.');
+    logMatchAttempt(null, null, null);
+    return null;
+  }
 
   let best = { id: null, distance: Infinity };
+  let secondBest = { id: null, distance: Infinity };
   entries.forEach(([id, savedDescriptor]) => {
     const distance = faceapi.euclideanDistance(descriptor, new Float32Array(savedDescriptor));
-    if (distance < best.distance) best = { id, distance };
+    if (distance < best.distance) {
+      secondBest = { ...best };
+      best = { id, distance };
+    } else if (distance < secondBest.distance) {
+      secondBest = { id, distance };
+    }
   });
 
-  if (best.distance < 0.52) {
-    const list = getLocalStudentsList();
-    return list.find((s) => s.id === best.id);
+  const margin = secondBest.distance - best.distance;
+  console.log(`[FaceMatch] Best: ${best.id} (d=${best.distance.toFixed(4)}), Runner-up: ${secondBest.id} (d=${secondBest.distance.toFixed(4)}), Margin: ${margin.toFixed(4)}`);
+
+  if (best.distance >= 0.52) {
+    logMatchAttempt('no match', best.distance, secondBest.distance);
+    return null;
   }
-  return null;
+
+  if (entries.length > 1 && margin < 0.08) {
+    console.warn(`[FaceMatch] AMBIGUOUS: margin ${margin.toFixed(4)} < 0.08 threshold. Rejecting match.`);
+    if (typeof Sentry !== 'undefined') Sentry.captureMessage(`Ambiguous face match: best=${best.id} d=${best.distance.toFixed(4)}, runner-up=${secondBest.id} d=${secondBest.distance.toFixed(4)}, margin=${margin.toFixed(4)}`, 'warning');
+    logMatchAttempt('ambiguous', best.distance, secondBest.distance);
+    return null;
+  }
+
+  logMatchAttempt(best.id, best.distance, secondBest.distance);
+  const list = getLocalStudentsList();
+  return list.find((s) => s.id === best.id) || null;
+}
+
+function logMatchAttempt(matchedId, winningDistance, runnerUpDistance) {
+  const entry = {
+    timestamp: new Date().toISOString(),
+    matchedId: matchedId || 'no match',
+    winningDistance: winningDistance !== null ? Number(winningDistance.toFixed(4)) : null,
+    runnerUpDistance: runnerUpDistance !== null ? Number(runnerUpDistance.toFixed(4)) : null,
+    gpsVerified: state.insideCampus
+  };
+  state.matchLog.push(entry);
+  // Cap at 100 entries
+  if (state.matchLog.length > 100) {
+    state.matchLog = state.matchLog.slice(-100);
+  }
+  localStorage.setItem("matchDebugLog", JSON.stringify(state.matchLog));
+  renderDebugPanel();
+}
+
+function renderDebugPanel() {
+  const table = document.getElementById('debugMatchTable');
+  if (!table) return;
+  const last20 = state.matchLog.slice(-20).reverse();
+  table.innerHTML = last20.map(e => `<tr>
+    <td style="font-size:0.7rem;white-space:nowrap">${new Date(e.timestamp).toLocaleTimeString()}</td>
+    <td style="font-size:0.7rem">${escapeHtml(String(e.matchedId))}</td>
+    <td style="font-size:0.7rem">${e.winningDistance !== null ? e.winningDistance : '—'}</td>
+    <td style="font-size:0.7rem">${e.runnerUpDistance !== null ? e.runnerUpDistance : '—'}</td>
+    <td style="font-size:0.7rem">${e.gpsVerified ? '✅' : '❌'}</td>
+  </tr>`).join('');
 }
 
 function getLocalStudentsList() {
-  const custom = JSON.parse(localStorage.getItem("customStudentsList") || "[]");
-  const deletedIds = JSON.parse(localStorage.getItem("deletedDefaultStudents") || "[]");
-  const activeDefaults = students.filter(s => !deletedIds.includes(s.id));
-  return [...activeDefaults, ...custom];
+  return JSON.parse(localStorage.getItem("customStudentsList") || "[]");
 }
 
 async function markAttendance(student) {
-  if (!state.insideCampus) {
-    toast("GPS Required", "You must verify your location coordinates first.");
-    return;
-  }
-
-  // Throttle scanner: prevent alert spam if scanned multiple times in a row
-  const timestamp = Date.now();
-  if (state.lastScannedStudent && state.lastScannedStudent.id === student.id && (timestamp - state.lastScannedStudent.time < 8000)) {
-    return;
-  }
-  state.lastScannedStudent = { id: student.id, time: timestamp };
-
-  // Timing check: Morning vs Afternoon Shift check-ins
-  const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  
-  if (!state.shiftConfig) {
-    state.shiftConfig = {
-      morningStart: "08:50",
-      morningEnd: "09:45",
-      afternoonStart: "13:30",
-      afternoonEnd: "14:30"
-    };
-  }
-
-  const timeToMin = (str) => {
-    const [h, m] = str.split(':').map(Number);
-    return h * 60 + m;
-  };
-
-  const morningStart = timeToMin(state.shiftConfig.morningStart);
-  const morningEnd = timeToMin(state.shiftConfig.morningEnd);
-  const afternoonStart = timeToMin(state.shiftConfig.afternoonStart);
-  const afternoonEnd = timeToMin(state.shiftConfig.afternoonEnd);
-
-  let activeShift = null;
-  if (currentMinutes >= morningStart && currentMinutes <= morningEnd) {
-    activeShift = "morning";
-  } else if (currentMinutes >= afternoonStart && currentMinutes <= afternoonEnd) {
-    activeShift = "afternoon";
-  }
-
-  if (!activeShift) {
-    const format12H = (str) => {
-      const [hStr, mStr] = str.split(':');
-      const h = parseInt(hStr, 10);
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      const dh = h % 12 || 12;
-      return `${dh}:${mStr} ${ampm}`;
-    };
-    const mStartStr = format12H(state.shiftConfig.morningStart);
-    const mEndStr = format12H(state.shiftConfig.morningEnd);
-    const aStartStr = format12H(state.shiftConfig.afternoonStart);
-    const aEndStr = format12H(state.shiftConfig.afternoonEnd);
-
-    toast("Check-in Closed", `Check-in is only available during morning shift (${mStartStr} - ${mEndStr}) or afternoon shift (${aStartStr} - ${aEndStr}).`);
-    showModal("Check-In Closed", `Morning geofence check-in is strictly open from ${mStartStr} to ${mEndStr}.\nAfternoon geofence check-in is open from ${aStartStr} to ${aEndStr}.`);
-    return;
-  }
-
-  if (getTodayRecord(student.id, activeShift)) {
-    toast("Check-in Logged", `You have already marked your ${activeShift} attendance today.`);
-    return;
-  }
-
-  const dateKey = getDateKey();
-  if (!state.attendance[dateKey]) state.attendance[dateKey] = {};
-
-  const existingRecord = state.attendance[dateKey][student.id] || {};
-  
-  const record = {
-    studentId: student.id,
-    name: student.name,
-    rollNo: student.studentId,
-    department: student.dept,
-    year: student.year,
-    morning: existingRecord.morning || "Absent",
-    morningTimestamp: existingRecord.morningTimestamp || null,
-    afternoon: existingRecord.afternoon || "Absent",
-    afternoonTimestamp: existingRecord.afternoonTimestamp || null,
-    source: "Biometric AI + Geolocator"
-  };
-
-  if (activeShift === "morning") {
-    record.morning = "Present";
-    record.morningTimestamp = now.toISOString();
-    if (!existingRecord.afternoon) {
-      record.afternoon = "Present"; // Default afternoon to Present if morning is Present
+  try {
+    if (!state.insideCampus) {
+      if (typeof Sentry !== 'undefined') Sentry.captureMessage(`Match attempted while GPS unverified: student=${student.id}`, 'info');
+      toast("GPS Required", "You must verify your location coordinates first.");
+      return;
     }
-  } else {
-    record.afternoon = "Present";
-    record.afternoonTimestamp = now.toISOString();
+
+    // Throttle scanner: prevent alert spam if scanned multiple times in a row
+    const timestamp = Date.now();
+    if (state.lastScannedStudent && state.lastScannedStudent.id === student.id && (timestamp - state.lastScannedStudent.time < 8000)) {
+      if (typeof Sentry !== 'undefined') Sentry.captureMessage(`Duplicate attendance blocked by throttle: student=${student.id}`, 'info');
+      return;
+    }
+    state.lastScannedStudent = { id: student.id, time: timestamp };
+
+    // Timing check: Morning vs Afternoon Shift check-ins
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    if (!state.shiftConfig) {
+      state.shiftConfig = {
+        morningStart: "08:50",
+        morningEnd: "09:45",
+        afternoonStart: "13:30",
+        afternoonEnd: "14:30"
+      };
+    }
+
+    const timeToMin = (str) => {
+      const [h, m] = str.split(':').map(Number);
+      return h * 60 + m;
+    };
+
+    const morningStart = timeToMin(state.shiftConfig.morningStart);
+    const morningEnd = timeToMin(state.shiftConfig.morningEnd);
+    const afternoonStart = timeToMin(state.shiftConfig.afternoonStart);
+    const afternoonEnd = timeToMin(state.shiftConfig.afternoonEnd);
+
+    let activeShift = null;
+    if (currentMinutes >= morningStart && currentMinutes <= morningEnd) {
+      activeShift = "morning";
+    } else if (currentMinutes >= afternoonStart && currentMinutes <= afternoonEnd) {
+      activeShift = "afternoon";
+    }
+
+    if (!activeShift) {
+      const format12H = (str) => {
+        const [hStr, mStr] = str.split(':');
+        const h = parseInt(hStr, 10);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const dh = h % 12 || 12;
+        return `${dh}:${mStr} ${ampm}`;
+      };
+      const mStartStr = format12H(state.shiftConfig.morningStart);
+      const mEndStr = format12H(state.shiftConfig.morningEnd);
+      const aStartStr = format12H(state.shiftConfig.afternoonStart);
+      const aEndStr = format12H(state.shiftConfig.afternoonEnd);
+
+      toast("Check-in Closed", `Check-in is only available during morning shift (${mStartStr} - ${mEndStr}) or afternoon shift (${aStartStr} - ${aEndStr}).`);
+      showModal("Check-In Closed", `Morning geofence check-in is strictly open from ${mStartStr} to ${mEndStr}.\nAfternoon geofence check-in is open from ${aStartStr} to ${aEndStr}.`);
+      return;
+    }
+
+    if (getTodayRecord(student.id, activeShift)) {
+      toast("Check-in Logged", `You have already marked your ${activeShift} attendance today.`);
+      return;
+    }
+
+    const dateKey = getDateKey();
+    if (!state.attendance[dateKey]) state.attendance[dateKey] = {};
+
+    const existingRecord = state.attendance[dateKey][student.id] || {};
+    
+    const record = {
+      studentId: student.id,
+      name: student.name,
+      rollNo: student.studentId,
+      department: student.dept,
+      year: student.year,
+      morning: existingRecord.morning || "Absent",
+      morningTimestamp: existingRecord.morningTimestamp || null,
+      afternoon: existingRecord.afternoon || "Absent",
+      afternoonTimestamp: existingRecord.afternoonTimestamp || null,
+      source: "Biometric AI + Geolocator"
+    };
+
+    if (activeShift === "morning") {
+      record.morning = "Present";
+      record.morningTimestamp = now.toISOString();
+      if (!existingRecord.afternoon) {
+        record.afternoon = "Present"; // Default afternoon to Present if morning is Present
+      }
+    } else {
+      record.afternoon = "Present";
+      record.afternoonTimestamp = now.toISOString();
+    }
+
+    state.attendance[dateKey][student.id] = record;
+    localStorage.setItem("studentAttendanceRecords", JSON.stringify(state.attendance));
+
+    // Save attendance record via Public API Proxy Endpoint
+    fetch('/api/attendance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        studentId: student.id,
+        studentName: student.name,
+        classCode: student.year,
+        morningStatus: record.morning,
+        afternoonStatus: record.afternoon,
+        dateKey: dateKey
+      })
+    }).catch(apiErr => console.warn("Public attendance POST error:", apiErr));
+
+    elements.recognizedName.textContent = student.name;
+    elements.recognizedTime.textContent = new Date(activeShift === "morning" ? record.morningTimestamp : record.afternoonTimestamp).toLocaleTimeString();
+    renderAttendanceTable();
+    updateStats();
+    setScanStatus("Attendance Marked", `Check-in recorded for ${student.name} (${activeShift} shift).`);
+    playSuccessTone();
+    showModal("Check-In Complete", `Attendance logged successfully for ${student.name} (${student.studentId}) on the ${activeShift} shift.`);
+
+    // Session lock: prevent further matching until camera restart
+    state.scanLocked = true;
+    console.log(`[ScanLock] Camera locked after successful check-in for ${student.id}`);
+  } catch (err) {
+    console.error("markAttendance error:", err);
+    if (typeof Sentry !== 'undefined') Sentry.captureException(err);
+    toast("Check-in Error", "An unexpected error occurred during attendance marking.");
   }
-
-  state.attendance[dateKey][student.id] = record;
-  localStorage.setItem("studentAttendanceRecords", JSON.stringify(state.attendance));
-
-  if (state.db) {
-    await state.db.collection("studentAttendance").doc(dateKey).collection("students").doc(student.id).set(record);
-  }
-
-  elements.recognizedName.textContent = student.name;
-  elements.recognizedTime.textContent = new Date(activeShift === "morning" ? record.morningTimestamp : record.afternoonTimestamp).toLocaleTimeString();
-  renderAttendanceTable();
-  updateStats();
-  setScanStatus("Attendance Marked", `Check-in recorded for ${student.name} (${activeShift} shift).`);
-  playSuccessTone();
-  showModal("Check-In Complete", `Attendance logged successfully for ${student.name} (${student.studentId}) on the ${activeShift} shift.`);
 }
 
 function getTodayRecord(studentId, shift = "morning") {
@@ -1751,12 +927,14 @@ function renderAttendanceTable() {
     
     const timestamp = record.morningTimestamp ? new Date(record.morningTimestamp).toLocaleString() : "Awaiting check-in";
     
+    const hasFaceDescriptor = !!state.descriptors[student.id];
+    const faceBadge = hasFaceDescriptor ? '' : ' <span style="color:#e03131;font-size:0.65rem;font-weight:600">⚠ Face not registered</span>';
     let rowHtml = `
       <tr>
         <td>
           <div class="person-cell">
             <span class="avatar">${getInitials(student.name)}</span>
-            <strong>${escapeHtml(student.name)}</strong>
+            <strong>${escapeHtml(student.name)}</strong>${faceBadge}
           </div>
         </td>
         <td>${escapeHtml(student.studentId)}</td>
@@ -1987,25 +1165,37 @@ async function saveRegisteredFace() {
     });
     state.descriptors[id] = avgDescriptor;
   } else if (!state.descriptors[id]) {
-    state.descriptors[id] = createSampleDescriptor(id);
+    // No face descriptor captured — warn admin instead of faking one
+    console.warn(`[Registration] No face descriptor captured for ${id}. Student will not be matchable until face is registered.`);
+    toast("⚠ Face Not Captured", `${name} was saved without biometric data. They must complete face registration to use check-in.`);
   }
 
   localStorage.setItem("studentFaceDescriptors", JSON.stringify(state.descriptors));
   
-  if (state.db) {
+  const adminToken = sessionStorage.getItem('adminToken');
+  if (adminToken) {
     try {
-      await state.db.collection("students").doc(id).set({
-        id,
-        name,
-        studentId,
-        dept,
-        year,
-        descriptor: state.descriptors[id] || null,
-        photos: state.capturedSnapshots || []
+      await fetch('/api/admin/students/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({
+          students: [{
+            id,
+            name,
+            studentId,
+            dept,
+            year,
+            descriptor: state.descriptors[id] || null,
+            photos: state.capturedSnapshots || []
+          }]
+        })
       });
-      toast("Cloud Sync", "Student registry and photos updated in Firebase.");
+      toast("Cloud Sync", "Student registry updated via Admin Server Proxy.");
     } catch (err) {
-      console.error("Cloud registration sync failed:", err);
+      console.error("Admin proxy registration sync failed:", err);
     }
   }
   
@@ -2015,7 +1205,11 @@ async function saveRegisteredFace() {
   showModal(state.editMode ? "Details Updated" : "Registration Complete", `Database record processed for ${name}.`);
 }
 
+// DEPRECATED: createSampleDescriptor generated fake non-facial descriptors
+// that could match against real faces, causing misidentification.
+// Kept for reference only — no longer called anywhere.
 function createSampleDescriptor(seed) {
+  console.warn('[DEPRECATED] createSampleDescriptor called — this should no longer be used.');
   return Array.from({ length: 128 }, (_, index) => {
     const code = seed.charCodeAt(index % seed.length) || 1;
     return ((code * (index + 3)) % 100) / 100;
@@ -2023,10 +1217,16 @@ function createSampleDescriptor(seed) {
 }
 
 function hydrateDescriptors() {
+  // Only real captured descriptors are kept in the matching pool.
+  // Students without a descriptor are excluded — no fake data.
   const list = getLocalStudentsList();
-  list.forEach((student) => {
-    if (!state.descriptors[student.id]) state.descriptors[student.id] = createSampleDescriptor(student.id);
-  });
+  const unregistered = list.filter(s => !state.descriptors[s.id]);
+  if (unregistered.length > 0) {
+    console.log(`[Hydrate] ${unregistered.length} student(s) without face descriptor: ${unregistered.map(s => s.id).join(', ')}`);
+  }
+  // Clean up any legacy fake descriptors by removing entries for students
+  // whose descriptors were generated by createSampleDescriptor
+  // (We can't perfectly detect fakes, but we don't add new ones anymore)
   localStorage.setItem("studentFaceDescriptors", JSON.stringify(state.descriptors));
 }
 
@@ -2448,14 +1648,35 @@ function getClassesConfig() {
   return state.classesConfig || defaultClassesConfig;
 }
 
-function getActiveConfiguration() {
+function getActiveConfiguration(silent = false) {
   const configs = getClassesConfig();
   const isAdminPage = window.location.pathname.includes('register.html');
   const activeClass = (isAdminPage 
     ? sessionStorage.getItem('adminClass') 
-    : sessionStorage.getItem('studentClass')) || "d11";
+    : sessionStorage.getItem('studentClass')) || "";
   const cleaned = activeClass.trim().toLowerCase();
-  return configs[cleaned] || configs['d11'] || defaultClassesConfig['d11'];
+
+  if (!cleaned) {
+    if (!silent) {
+      console.error('[Config] No class selected — cannot determine geofence.');
+      toast("Configuration Error", "No class selected. Please log in again and select a class.");
+    }
+    state.insideCampus = false;
+    return null;
+  }
+
+  const config = configs[cleaned];
+  if (!config) {
+    if (!silent) {
+      console.error(`[Config] Class '${cleaned}' not found in configuration. Available: ${Object.keys(configs).join(', ')}`);
+      toast("Configuration Error", `Class '${activeClass}' has no geofence configured. Check-in is blocked. Contact admin.`);
+      if (typeof Sentry !== 'undefined') Sentry.captureMessage(`Missing class config: '${cleaned}'. Available: ${Object.keys(configs).join(', ')}`, 'error');
+    }
+    state.insideCampus = false;
+    return null;
+  }
+
+  return config;
 }
 
 function isPointInPolygon(lat, lon, vs) {
@@ -2527,8 +1748,12 @@ window.deleteStudent = function(id) {
       localStorage.setItem("studentFaceDescriptors", JSON.stringify(state.descriptors));
     }
 
-    if (state.db) {
-      state.db.collection("students").doc(id).delete().catch(err => console.error("Firestore deletion failed:", err));
+    const adminToken = sessionStorage.getItem('adminToken');
+    if (adminToken) {
+      fetch(`/api/admin/students/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      }).catch(err => console.error("Admin proxy delete student error:", err));
     }
 
     if (state.editMode && state.editStudentId === id) {
@@ -2628,3 +1853,600 @@ window.closePhotoModal = function() {
   const modal = document.getElementById("photoViewerModal");
   if (modal) modal.style.display = "none";
 };
+
+// Self-Registration Link & Approval Queue Management
+async function generateRegistrationLink() {
+  const adminClass = (sessionStorage.getItem('adminClass') || "d11").trim().toLowerCase();
+  const token = typeof crypto !== 'undefined' && crypto.randomUUID 
+    ? crypto.randomUUID() 
+    : 'token-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+  const createdAt = new Date();
+  const expiresAt = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000); // 24 Hours
+
+  const adminToken = sessionStorage.getItem('adminToken');
+
+  try {
+    let linkData = null;
+    if (adminToken) {
+      const res = await fetch('/api/admin/registration-links', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ classCode: adminClass })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        linkData = data.linkData;
+      }
+    }
+
+    if (!linkData) {
+      const token = typeof crypto !== 'undefined' && crypto.randomUUID 
+        ? crypto.randomUUID() 
+        : 'token-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+      const createdAt = new Date();
+      const expiresAt = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000);
+      linkData = { token, class: adminClass, createdAt: createdAt.toISOString(), expiresAt: expiresAt.toISOString(), active: true };
+    }
+
+    const localLinks = JSON.parse(localStorage.getItem('registrationLinks') || "[]");
+    localLinks.push(linkData);
+    localStorage.setItem('registrationLinks', JSON.stringify(localLinks));
+
+    const shareUrl = `${window.location.origin}/self-register.html?token=${linkData.token}`;
+    
+    const container = $("#latestGeneratedLinkContainer");
+    const input = $("#generatedLinkInput");
+    if (container && input) {
+      input.value = shareUrl;
+      container.style.display = "block";
+    }
+
+    toast("Link Generated", `24-hour self-registration link created for class ${adminClass.toUpperCase()}.`);
+    renderActiveLinks();
+  } catch (err) {
+    console.error("Generate link error:", err);
+    toast("Link Error", "Could not generate registration link.");
+  }
+}
+
+function copyGeneratedLink() {
+  const input = $("#generatedLinkInput");
+  if (!input || !input.value) return;
+  navigator.clipboard.writeText(input.value);
+  toast("Copied", "Registration link copied to clipboard.");
+}
+
+function copyLinkUrl(url) {
+  navigator.clipboard.writeText(url);
+  toast("Copied", "Registration link copied to clipboard.");
+}
+
+async function revokeRegistrationLink(token) {
+  const adminToken = sessionStorage.getItem('adminToken');
+  try {
+    if (adminToken) {
+      await fetch(`/api/admin/registration-links/${token}/revoke`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+    }
+    const localLinks = JSON.parse(localStorage.getItem('registrationLinks') || "[]");
+    const link = localLinks.find(l => l.token === token);
+    if (link) link.active = false;
+    localStorage.setItem('registrationLinks', JSON.stringify(localLinks));
+
+    toast("Link Revoked", "The registration link has been invalidated.");
+    renderActiveLinks();
+  } catch (err) {
+    console.error("Revoke link error:", err);
+    toast("Revoke Error", "Failed to revoke registration link.");
+  }
+}
+
+async function renderActiveLinks() {
+  const container = $("#activeLinksContainer");
+  if (!container) return;
+
+  const adminClass = (sessionStorage.getItem('adminClass') || "").trim().toLowerCase();
+  let links = [];
+
+  if (state.db) {
+    try {
+      let query = state.db.collection('registrationLinks').where('active', '==', true);
+      if (adminClass) {
+        query = query.where('class', '==', adminClass);
+      }
+      const snapshot = await query.get();
+      snapshot.forEach(doc => links.push(doc.data()));
+    } catch (err) {
+      console.warn("Firestore fetch links failed, reading local:", err);
+    }
+  }
+
+  if (links.length === 0) {
+    const localLinks = JSON.parse(localStorage.getItem('registrationLinks') || "[]");
+    const now = new Date();
+    links = localLinks.filter(l => l.active && new Date(l.expiresAt) > now && (!adminClass || l.class === adminClass));
+  }
+
+  if (links.length === 0) {
+    container.innerHTML = '<p style="font-size: 0.8rem; color: var(--muted);">No active self-registration links for this class.</p>';
+    return;
+  }
+
+  container.innerHTML = links.map(l => {
+    const shareUrl = `${window.location.origin}/self-register.html?token=${l.token}`;
+    const expires = new Date(l.expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `
+      <div style="background: var(--bg); border: 1px solid var(--line); padding: 8px 12px; border-radius: var(--radius-sm); margin-bottom: 8px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 65%;">
+          <strong>Class ${escapeHtml(l.class.toUpperCase())}</strong> &bull; <span style="color: var(--muted)">Expires ${expires}</span><br>
+          <span style="font-family: monospace; font-size: 0.75rem; color: var(--accent);">${escapeHtml(shareUrl)}</span>
+        </div>
+        <div style="display: flex; gap: 4px;">
+          <button class="secondary-btn" onclick="copyLinkUrl('${escapeHtml(shareUrl)}')" type="button" style="padding: 2px 8px; font-size: 0.75rem;">Copy</button>
+          <button class="icon-btn delete-btn" onclick="revokeRegistrationLink('${l.token}')" type="button" style="padding: 2px 8px; font-size: 0.75rem;">Revoke</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function renderPendingQueue() {
+  const container = $("#pendingQueueContainer");
+  if (!container) return;
+
+  const adminClass = (sessionStorage.getItem('adminClass') || "").trim().toLowerCase();
+  const adminToken = sessionStorage.getItem('adminToken');
+  let pendingList = [];
+
+  if (adminToken) {
+    try {
+      const res = await fetch(`/api/admin/pending-registrations?classCode=${adminClass}`, {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        pendingList = data.pending || [];
+      }
+    } catch (err) {
+      console.warn("Fetch pending queue proxy failed:", err);
+    }
+  }
+
+  if (pendingList.length === 0) {
+    container.innerHTML = '<p style="font-size: 0.8rem; color: var(--muted); text-align: center; padding: 12px;">No pending self-registrations awaiting approval.</p>';
+    return;
+  }
+
+  container.innerHTML = pendingList.map(p => {
+    const photos = p.photos || [];
+    const photoThumbs = photos.map((url, i) => `
+      <img src="${url}" alt="Angle ${i+1}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--line);">
+    `).join('');
+
+    return `
+      <div style="background: var(--bg); border: 1px solid var(--line); padding: 12px; border-radius: var(--radius-sm);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+          <div>
+            <strong style="font-size: 0.9rem; color: var(--text);">${escapeHtml(p.studentName)}</strong>
+            <span style="font-size: 0.75rem; color: var(--muted); display: block;">ID: ${escapeHtml(p.rollNo || p.studentId)} | Dept: ${escapeHtml(p.dept)} | Class: ${escapeHtml((p.year || p.class || "").toUpperCase())}</span>
+          </div>
+          <span style="font-size: 0.7rem; color: var(--accent); background: rgba(16,172,132,0.1); padding: 2px 6px; border-radius: 4px;">Pending</span>
+        </div>
+        
+        <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+          ${photoThumbs}
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="primary-btn" onclick="approvePendingRegistration('${p.docId}')" type="button" style="flex: 1; padding: 4px 10px; font-size: 0.8rem;">Approve</button>
+          <button class="secondary-btn" onclick="rejectPendingRegistration('${p.docId}')" type="button" style="flex: 1; padding: 4px 10px; font-size: 0.8rem; color: var(--danger); border-color: var(--danger);" onmouseover="this.style.background='rgba(224,49,49,0.1)'" onmouseout="this.style.background='transparent'">Reject</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function approvePendingRegistration(pendingId) {
+  const adminToken = sessionStorage.getItem('adminToken');
+  if (!adminToken) {
+    toast("Admin Session Required", "Please log in to approve registrations.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/admin/pending-registrations/${pendingId}/approve`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      toast("Registration Approved", `Facial profile activated for ${data.name || 'student'}.`);
+      await syncRegistryFromCloud();
+      renderPendingQueue();
+    } else {
+      toast("Approval Failed", data.message || "Could not approve submission.");
+    }
+  } catch (err) {
+    console.error("Approve registration proxy error:", err);
+    toast("Approval Error", "Failed to approve registration.");
+  }
+}
+
+async function rejectPendingRegistration(pendingId) {
+  const adminToken = sessionStorage.getItem('adminToken');
+  if (!adminToken) {
+    toast("Admin Session Required", "Please log in to reject registrations.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/admin/pending-registrations/${pendingId}/reject`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+    if (res.ok) {
+      toast("Submission Rejected", "Pending self-registration deleted.");
+      renderPendingQueue();
+    }
+  } catch (err) {
+    console.error("Reject registration proxy error:", err);
+    toast("Rejection Error", "Failed to reject registration.");
+  }
+}
+
+// Bulk Roster Import (.xlsx / .csv)
+function downloadRosterTemplate() {
+  const headers = [["Name", "StudentID", "Department", "Class"]];
+  const sampleData = [
+    ["Sample Student 1", "25UAD901", "ADS", "d11"],
+    ["Sample Student 2", "25UAD902", "ADS", "d11"]
+  ];
+
+  if (typeof XLSX !== 'undefined') {
+    const ws = XLSX.utils.aoa_to_sheet([...headers, ...sampleData]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Student_Roster");
+    XLSX.writeFile(wb, "Student_Roster_Template.xlsx");
+    toast("Template Downloaded", "Student roster Excel template created.");
+  } else {
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      [...headers, ...sampleData].map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "Student_Roster_Template.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast("Template Downloaded", "Student roster CSV template created.");
+  }
+}
+
+async function handleRosterFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const errorBox = $("#bulkRosterErrorBox");
+  const previewContainer = $("#bulkRosterPreviewContainer");
+  const finalSummary = $("#bulkRosterFinalSummary");
+
+  if (errorBox) errorBox.style.display = "none";
+  if (previewContainer) previewContainer.style.display = "none";
+  if (finalSummary) finalSummary.style.display = "none";
+
+  const showFileError = (msg) => {
+    if (errorBox) {
+      errorBox.innerHTML = `<strong>⚠️ File Read Error</strong><br>${escapeHtml(msg)}`;
+      errorBox.style.display = "block";
+    }
+    toast("File Error", msg, "danger");
+  };
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      if (typeof XLSX === 'undefined') {
+        showFileError("Excel parser library (SheetJS) is still loading. Please wait a moment and try again.");
+        return;
+      }
+
+      const data = new Uint8Array(e.target.result);
+      let workbook;
+      try {
+        workbook = XLSX.read(data, { type: 'array' });
+      } catch (parseErr) {
+        showFileError("Could not read this file — please make sure it's a valid Excel (.xlsx) or CSV file");
+        return;
+      }
+
+      const firstSheetName = workbook.SheetNames[0];
+      if (!firstSheetName) {
+        showFileError("The uploaded workbook contains no sheets.");
+        return;
+      }
+
+      const worksheet = workbook.Sheets[firstSheetName];
+      const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+
+      if (!rows || rows.length < 2) {
+        showFileError("The file contains no data rows beyond headers.");
+        return;
+      }
+
+      // Validate Header Row
+      const headerRow = (rows[0] || []).map(h => String(h).trim().toLowerCase());
+
+      const nameIdx = headerRow.findIndex(h => h === "name" || h === "student name");
+      const studentIdIdx = headerRow.findIndex(h => h === "studentid" || h === "student id" || h === "roll no" || h === "rollno");
+      const deptIdx = headerRow.findIndex(h => h === "department" || h === "dept");
+      const classIdx = headerRow.findIndex(h => h === "class" || h === "year");
+
+      if (nameIdx === -1 || studentIdIdx === -1 || deptIdx === -1 || classIdx === -1) {
+        const foundHeadersStr = rows[0] && rows[0].length > 0 ? rows[0].join(", ") : "Empty Header Row";
+        showFileError(`Header Validation Error:<br>Expected columns: <strong>Name, StudentID, Department, Class</strong><br>Found columns: <code>[${escapeHtml(foundHeadersStr)}]</code>`);
+        return;
+      }
+
+      // Existing Roster for Duplicate Checking
+      const existingList = getLocalStudentsList();
+      const processedIdsInFile = new Set();
+
+      const parsedRows = [];
+      let validCount = 0;
+      let skippedCount = 0;
+      let missingCount = 0;
+      let duplicateCount = 0;
+
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length === 0 || row.every(cell => String(cell).trim() === "")) {
+          continue; // Skip empty trailing rows
+        }
+
+        const name = String(row[nameIdx] || "").trim();
+        const rawStudentId = String(row[studentIdIdx] || "").trim();
+        const dept = String(row[deptIdx] || "").trim();
+        const classCode = String(row[classIdx] || "").trim();
+
+        // Required field validation
+        if (!name || !rawStudentId || !dept || !classCode) {
+          missingCount++;
+          skippedCount++;
+          parsedRows.push({
+            rowNum: i + 1,
+            name: name || "—",
+            studentId: rawStudentId || "—",
+            dept: dept || "—",
+            classCode: classCode || "—",
+            status: "skipped_missing",
+            reason: "Missing required field(s)"
+          });
+          continue;
+        }
+
+        // Generate ID
+        const cleanId = rawStudentId.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+        const id = cleanId.startsWith("std-") ? cleanId : ("std-" + cleanId);
+
+        // Check Duplicates against existing roster & current file
+        const isDuplicateRoster = existingList.some(s => s.id === id || s.studentId.toLowerCase() === rawStudentId.toLowerCase());
+        const isDuplicateFile = processedIdsInFile.has(id);
+
+        if (isDuplicateRoster || isDuplicateFile) {
+          duplicateCount++;
+          skippedCount++;
+          parsedRows.push({
+            rowNum: i + 1,
+            name,
+            studentId: rawStudentId,
+            dept,
+            classCode,
+            status: "skipped_duplicate",
+            reason: isDuplicateRoster ? `Duplicate Student ID (${rawStudentId} exists in registry)` : `Duplicate Student ID (${rawStudentId} repeated in file)`
+          });
+          continue;
+        }
+
+        processedIdsInFile.add(id);
+        validCount++;
+        parsedRows.push({
+          rowNum: i + 1,
+          id,
+          name,
+          studentId: rawStudentId,
+          dept,
+          classCode,
+          status: "valid",
+          reason: "Ready for import"
+        });
+      }
+
+      state.pendingBulkImport = {
+        validRows: parsedRows.filter(r => r.status === "valid"),
+        allRows: parsedRows,
+        validCount,
+        skippedCount,
+        missingCount,
+        duplicateCount
+      };
+
+      // Render Preview Table
+      const summaryHeading = $("#bulkRosterSummaryHeading");
+      if (summaryHeading) {
+        summaryHeading.innerHTML = `<strong>${validCount} students ready to import</strong>. <span style="color: var(--muted);">${skippedCount} rows skipped (${missingCount} missing fields, ${duplicateCount} duplicates).</span>`;
+      }
+
+      const tbody = $("#bulkRosterPreviewBody");
+      if (tbody) {
+        tbody.innerHTML = parsedRows.map(r => {
+          let badgeHtml = '';
+          if (r.status === "valid") {
+            badgeHtml = '<span class="badge present">Ready</span>';
+          } else if (r.status === "skipped_missing") {
+            badgeHtml = `<span class="badge" style="background: rgba(245,159,0,0.1); color: var(--warning);">Skipped: ${escapeHtml(r.reason)}</span>`;
+          } else {
+            badgeHtml = `<span class="badge absent">Skipped: ${escapeHtml(r.reason)}</span>`;
+          }
+
+          return `
+            <tr style="border-bottom: 1px solid var(--line);">
+              <td style="padding: 6px 8px; color: var(--muted);">${r.rowNum}</td>
+              <td style="padding: 6px 8px;"><strong>${escapeHtml(r.name)}</strong></td>
+              <td style="padding: 6px 8px;">${escapeHtml(r.studentId)}</td>
+              <td style="padding: 6px 8px;">${escapeHtml(r.dept)}</td>
+              <td style="padding: 6px 8px;">${escapeHtml(r.classCode)}</td>
+              <td style="padding: 6px 8px;">${badgeHtml}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      const confirmBtn = $("#confirmRosterImportBtn");
+      if (confirmBtn) {
+        confirmBtn.disabled = validCount === 0;
+        confirmBtn.textContent = `Confirm Import (${validCount} Students)`;
+      }
+
+      if (previewContainer) previewContainer.style.display = "block";
+      toast("File Parsed", `${validCount} valid students found in file.`);
+    } catch (err) {
+      console.error("Roster file read exception:", err);
+      showFileError("Could not read this file — please make sure it's a valid Excel (.xlsx) or CSV file");
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+async function confirmRosterImport() {
+  if (!state.pendingBulkImport || !state.pendingBulkImport.validRows || state.pendingBulkImport.validRows.length === 0) {
+    toast("No Valid Rows", "No valid student records to import.");
+    return;
+  }
+
+  const { validRows, missingCount, duplicateCount } = state.pendingBulkImport;
+  const confirmBtn = $("#confirmRosterImportBtn");
+  if (confirmBtn) {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "Importing...";
+  }
+
+  try {
+    const custom = JSON.parse(localStorage.getItem("customStudentsList") || "[]");
+
+    for (const row of validRows) {
+      const studentRecord = {
+        id: row.id,
+        name: row.name,
+        studentId: row.studentId,
+        dept: row.dept,
+        year: row.classCode,
+        percent: 100
+      };
+
+      // Add to customStudentsList
+      custom.push(studentRecord);
+
+      // Save to Firestore if connected (descriptor = null so "Face not registered" badge displays)
+      if (state.db) {
+        try {
+          await state.db.collection("students").doc(row.id).set({
+            id: row.id,
+            name: row.name,
+            studentId: row.studentId,
+            dept: row.dept,
+            year: row.classCode,
+            descriptor: null,
+            photos: []
+          });
+        } catch (dbErr) {
+          console.warn(`Firestore save failed for ${row.id}:`, dbErr);
+        }
+      }
+    }
+
+    localStorage.setItem("customStudentsList", JSON.stringify(custom));
+
+    // Show Final Summary
+    const previewContainer = $("#bulkRosterPreviewContainer");
+    const finalSummary = $("#bulkRosterFinalSummary");
+    const summaryTitle = $("#finalSummaryTitle");
+    const summaryDetails = $("#finalSummaryDetails");
+
+    if (previewContainer) previewContainer.style.display = "none";
+    if (finalSummary) {
+      if (summaryTitle) {
+        summaryTitle.textContent = `✅ ${validRows.length} students imported successfully. ${duplicateCount} skipped as duplicates. ${missingCount} skipped for missing data.`;
+      }
+      if (summaryDetails) {
+        const skippedList = state.pendingBulkImport.allRows.filter(r => r.status !== "valid");
+        if (skippedList.length > 0) {
+          summaryDetails.innerHTML = `<strong>Skipped Rows Details:</strong><ul style="margin: 6px 0 0 16px; padding: 0;">` +
+            skippedList.map(s => `<li>Row ${s.rowNum} (${escapeHtml(s.name)} - ${escapeHtml(s.studentId)}): ${escapeHtml(s.reason)}</li>`).join('') +
+            `</ul>`;
+        } else {
+          summaryDetails.innerHTML = `All rows imported cleanly without errors.`;
+        }
+      }
+      finalSummary.style.display = "block";
+    }
+
+    // Sync imported students via Admin Proxy API
+    const adminToken = sessionStorage.getItem('adminToken');
+    if (adminToken) {
+      try {
+        await fetch('/api/admin/students/import', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminToken}`
+          },
+          body: JSON.stringify({ students: validRows })
+        });
+      } catch (importProxyErr) {
+        console.warn("Roster import proxy error:", importProxyErr);
+      }
+    }
+
+    toast("Import Complete", `${validRows.length} students added to roster.`);
+    if (elements.attendanceTable) renderAttendanceTable();
+    updateStats();
+  } catch (err) {
+    console.error("Confirm roster import error:", err);
+    toast("Import Failed", "An error occurred while saving imported records.");
+    if (confirmBtn) confirmBtn.disabled = false;
+  }
+}
+
+// System Data Reset Helper (Preserves Geofence & Shift Configuration)
+async function wipeAllStudentData() {
+  // Clear targeted localStorage keys
+  localStorage.removeItem("customStudentsList");
+  localStorage.removeItem("studentFaceDescriptors");
+  localStorage.removeItem("studentAttendanceRecords");
+  localStorage.removeItem("deletedDefaultStudents");
+  localStorage.removeItem("registrationLinks");
+  localStorage.removeItem("matchDebugLog");
+
+  // Clear in-memory state
+  state.descriptors = {};
+  state.attendance = {};
+  state.matchLog = [];
+
+  // Update UI
+  if (elements.attendanceTable) renderAttendanceTable();
+  if (elements.totalStudents) updateStats();
+  if (window.location.pathname.includes('register.html')) {
+    renderActiveLinks();
+    renderPendingQueue();
+  }
+  toast("Data Reset", "All student profiles, attendance, and registration queues cleared.");
+}
+
+window.wipeAllStudentData = wipeAllStudentData;

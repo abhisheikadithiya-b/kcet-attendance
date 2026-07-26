@@ -262,6 +262,64 @@ app.post('/api/student-login', apiRateLimiter, async (req, res) => {
   return res.status(401).json({ success: false, message: 'Incorrect password for this class.' });
 });
 
+// Firebase Admin SDK Setup (Server Proxy for Firestore & Storage)
+const crypto = require('crypto');
+let admin = null;
+let adminDb = null;
+let adminStorage = null;
+
+try {
+  admin = require('firebase-admin');
+  const serviceAccountVar = process.env.FIREBASE_SERVICE_ACCOUNT;
+  
+  if (serviceAccountVar) {
+    let serviceAccount;
+    if (serviceAccountVar.trim().startsWith('{')) {
+      serviceAccount = JSON.parse(serviceAccountVar);
+    } else {
+      const decoded = Buffer.from(serviceAccountVar, 'base64').toString('utf8');
+      serviceAccount = JSON.parse(decoded);
+    }
+    
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "kcet-attendance.firebasestorage.app"
+    });
+    adminDb = admin.firestore();
+    adminStorage = admin.storage();
+    console.log('[FirebaseAdmin] Admin SDK initialized successfully via service account.');
+  } else {
+    console.warn('[FirebaseAdmin] FIREBASE_SERVICE_ACCOUNT environment variable not set. Running in API proxy mode.');
+  }
+} catch (err) {
+  console.warn('[FirebaseAdmin] Initialization skipped/failed:', err.message);
+}
+
+// Active Admin Session Store (In-Memory 12-Hour Tokens)
+const activeAdminSessions = {};
+
+function cleanExpiredSessions() {
+  const now = Date.now();
+  Object.keys(activeAdminSessions).forEach(token => {
+    if (activeAdminSessions[token].expiresAt <= now) {
+      delete activeAdminSessions[token];
+    }
+  });
+}
+
+function adminAuthMiddleware(req, res, next) {
+  cleanExpiredSessions();
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+
+  if (!token || !activeAdminSessions[token]) {
+    return res.status(401).json({ success: false, message: "Unauthorized. Admin session expired or invalid." });
+  }
+
+  req.adminSession = activeAdminSessions[token];
+  next();
+}
+
 // Admin Login API
 app.post('/api/admin-login', apiRateLimiter, async (req, res) => {
   const { classCode, password } = req.body;
@@ -274,9 +332,276 @@ app.post('/api/admin-login', apiRateLimiter, async (req, res) => {
   
   const expectedPwd = (config && config.adminPassword) ? config.adminPassword : "KcetAdminSecurePanel#2026";
   if (password === expectedPwd) {
-    return res.json({ success: true });
+    const token = 'adm_sess_' + crypto.randomBytes(32).toString('hex');
+    activeAdminSessions[token] = {
+      classCode: code,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 12 * 60 * 60 * 1000 // 12 Hours
+    };
+    return res.json({ success: true, adminToken: token, classCode: code });
   }
   return res.status(401).json({ success: false, message: 'Incorrect administrator password.' });
+});
+
+// Admin Logout API
+app.post('/api/admin/logout', adminAuthMiddleware, (req, res) => {
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (token && activeAdminSessions[token]) {
+    delete activeAdminSessions[token];
+  }
+  return res.json({ success: true, message: 'Logged out successfully.' });
+});
+
+// Public Student Live Check-in Endpoint
+app.post('/api/attendance', apiRateLimiter, async (req, res) => {
+  const { studentId, studentName, classCode, morningStatus, afternoonStatus, dateKey } = req.body;
+  if (!studentId || !classCode) {
+    return res.status(400).json({ success: false, message: 'Student ID and class code required.' });
+  }
+
+  const todayStr = dateKey || new Date().toISOString().split('T')[0];
+  const record = {
+    id: studentId,
+    name: studentName,
+    morning: morningStatus || "Absent",
+    afternoon: afternoonStatus || "Absent",
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    if (adminDb) {
+      await adminDb.collection("studentAttendance").doc(todayStr).collection("students").doc(studentId).set(record, { merge: true });
+    }
+    return res.json({ success: true, record });
+  } catch (err) {
+    console.error("Save attendance error:", err);
+    return res.status(500).json({ success: false, message: 'Failed to record attendance.' });
+  }
+});
+
+// Public Attendance Status GET Endpoint
+app.get('/api/attendance', async (req, res) => {
+  const { dateKey, classCode } = req.query;
+  const targetDate = dateKey || new Date().toISOString().split('T')[0];
+  const records = {};
+
+  try {
+    if (adminDb) {
+      const snapshot = await adminDb.collection("studentAttendance").doc(targetDate).collection("students").get();
+      snapshot.forEach(doc => {
+        records[doc.id] = doc.data();
+      });
+    }
+    return res.json({ success: true, dateKey: targetDate, records });
+  } catch (err) {
+    console.error("Fetch attendance error:", err);
+    return res.json({ success: true, dateKey: targetDate, records: {} });
+  }
+});
+
+// Admin GET Students
+app.get('/api/admin/students', adminAuthMiddleware, async (req, res) => {
+  const classCode = req.query.classCode || req.adminSession.classCode;
+  const studentsList = [];
+  const descriptors = {};
+
+  try {
+    if (adminDb) {
+      const snapshot = await adminDb.collection("students").get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (!classCode || (data.year && data.year.toLowerCase() === classCode.toLowerCase())) {
+          studentsList.push({
+            id: data.id,
+            name: data.name,
+            studentId: data.studentId,
+            dept: data.dept,
+            year: data.year,
+            photos: data.photos || []
+          });
+          if (data.descriptor && Array.isArray(data.descriptor)) {
+            descriptors[data.id] = data.descriptor;
+          }
+        }
+      });
+    }
+    return res.json({ success: true, students: studentsList, descriptors });
+  } catch (err) {
+    console.error("Admin fetch students error:", err);
+    return res.status(500).json({ success: false, message: 'Failed to fetch students.' });
+  }
+});
+
+// Admin Import / Create Students
+app.post('/api/admin/students/import', adminAuthMiddleware, async (req, res) => {
+  const { students } = req.body;
+  if (!Array.isArray(students)) {
+    return res.status(400).json({ success: false, message: 'Students array required.' });
+  }
+
+  try {
+    if (adminDb) {
+      const batch = adminDb.batch();
+      for (const s of students) {
+        const docRef = adminDb.collection("students").doc(s.id);
+        batch.set(docRef, {
+          id: s.id,
+          name: s.name,
+          studentId: s.studentId,
+          dept: s.dept,
+          year: s.year || s.classCode,
+          descriptor: s.descriptor || null,
+          photos: s.photos || []
+        }, { merge: true });
+      }
+      await batch.commit();
+    }
+    return res.json({ success: true, importedCount: students.length });
+  } catch (err) {
+    console.error("Admin import students error:", err);
+    return res.status(500).json({ success: false, message: 'Failed to import students.' });
+  }
+});
+
+// Admin Delete Student
+app.delete('/api/admin/students/:id', adminAuthMiddleware, async (req, res) => {
+  const id = req.params.id;
+  try {
+    if (adminDb) {
+      await adminDb.collection("students").doc(id).delete();
+    }
+    return res.json({ success: true, message: `Student ${id} deleted.` });
+  } catch (err) {
+    console.error("Delete student error:", err);
+    return res.status(500).json({ success: false, message: 'Failed to delete student.' });
+  }
+});
+
+// Admin Pending Registrations GET
+app.get('/api/admin/pending-registrations', adminAuthMiddleware, async (req, res) => {
+  const classCode = req.query.classCode || req.adminSession.classCode;
+  const pending = [];
+
+  try {
+    if (adminDb) {
+      let query = adminDb.collection('pendingRegistrations').where('status', '==', 'pending');
+      if (classCode) {
+        query = query.where('class', '==', classCode.toLowerCase());
+      }
+      const snapshot = await query.get();
+      snapshot.forEach(doc => pending.push({ docId: doc.id, ...doc.data() }));
+    }
+    return res.json({ success: true, pending });
+  } catch (err) {
+    console.error("Admin fetch pending error:", err);
+    return res.status(500).json({ success: false, message: 'Failed to fetch pending queue.' });
+  }
+});
+
+// Admin Pending Registration Approve
+app.post('/api/admin/pending-registrations/:id/approve', adminAuthMiddleware, async (req, res) => {
+  const pendingId = req.params.id;
+  try {
+    if (adminDb) {
+      const docRef = adminDb.collection('pendingRegistrations').doc(pendingId);
+      const doc = await docRef.get();
+      if (!doc.exists) {
+        return res.status(404).json({ success: false, message: 'Pending registration not found.' });
+      }
+
+      const data = doc.data();
+      const studentId = data.studentId;
+
+      await adminDb.collection("students").doc(studentId).set({
+        id: studentId,
+        name: data.studentName,
+        studentId: data.rollNo || studentId,
+        dept: data.dept,
+        year: data.year || data.class,
+        descriptor: data.descriptor,
+        photos: data.photos || []
+      }, { merge: true });
+
+      await docRef.delete();
+      return res.json({ success: true, studentId, name: data.studentName });
+    }
+    return res.status(500).json({ success: false, message: 'Database disconnected.' });
+  } catch (err) {
+    console.error("Approve registration error:", err);
+    return res.status(500).json({ success: false, message: 'Failed to approve registration.' });
+  }
+});
+
+// Admin Pending Registration Reject
+app.post('/api/admin/pending-registrations/:id/reject', adminAuthMiddleware, async (req, res) => {
+  const pendingId = req.params.id;
+  try {
+    if (adminDb) {
+      const docRef = adminDb.collection('pendingRegistrations').doc(pendingId);
+      const doc = await docRef.get();
+      if (doc.exists) {
+        const data = doc.data();
+        if (adminStorage && data.photos && Array.isArray(data.photos)) {
+          for (const url of data.photos) {
+            if (typeof url === 'string' && url.includes('firebasestorage.googleapis.com')) {
+              try {
+                const fileRef = adminStorage.bucket().file(decodeURIComponent(url.split('/o/')[1].split('?')[0]));
+                await fileRef.delete();
+              } catch (e) {
+                console.warn("Storage delete notice:", e.message);
+              }
+            }
+          }
+        }
+        await docRef.delete();
+      }
+      return res.json({ success: true, message: 'Pending registration rejected.' });
+    }
+    return res.status(500).json({ success: false, message: 'Database disconnected.' });
+  } catch (err) {
+    console.error("Reject registration error:", err);
+    return res.status(500).json({ success: false, message: 'Failed to reject registration.' });
+  }
+});
+
+// Admin Registration Links Management
+app.post('/api/admin/registration-links', adminAuthMiddleware, async (req, res) => {
+  const classCode = req.body.classCode || req.adminSession.classCode || "d11";
+  const token = 'token-' + Date.now() + '-' + crypto.randomBytes(8).toString('hex');
+  const createdAt = new Date();
+  const expiresAt = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000);
+
+  const linkData = {
+    token,
+    class: classCode.toLowerCase(),
+    createdAt: createdAt.toISOString(),
+    expiresAt: expiresAt.toISOString(),
+    active: true
+  };
+
+  try {
+    if (adminDb) {
+      await adminDb.collection('registrationLinks').doc(token).set(linkData);
+    }
+    return res.json({ success: true, linkData });
+  } catch (err) {
+    console.error("Create registration link error:", err);
+    return res.status(500).json({ success: false, message: 'Failed to create link.' });
+  }
+});
+
+app.post('/api/admin/registration-links/:id/revoke', adminAuthMiddleware, async (req, res) => {
+  const token = req.params.id;
+  try {
+    if (adminDb) {
+      await adminDb.collection('registrationLinks').doc(token).update({ active: false });
+    }
+    return res.json({ success: true, message: 'Link revoked.' });
+  } catch (err) {
+    console.error("Revoke registration link error:", err);
+    return res.status(500).json({ success: false, message: 'Failed to revoke link.' });
+  }
 });
 
 // Configured Classes GET endpoint

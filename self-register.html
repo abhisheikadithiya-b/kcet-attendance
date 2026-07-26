@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Self-Registration | KCET Smart Campus</title>
+  <meta name="description" content="Submit 3-angle biometric face capture for teacher approval.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="manifest" href="manifest.json">
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+  <script defer src="assets/js/app.js"></script>
+  <!-- Sentry Error Monitoring -->
+  <script
+    src="https://js.sentry-cdn.com/3bb7ce58ea2c267d9f4e41393082048e.min.js"
+    crossorigin="anonymous"
+  ></script>
+  <style>
+    .self-reg-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .self-reg-card {
+      max-width: 580px;
+      width: 100%;
+      padding: 28px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .status-alert {
+      padding: 16px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .status-alert.error {
+      background: rgba(224, 49, 49, 0.1);
+      border: 1px solid var(--danger);
+      color: #e03131;
+    }
+    .status-alert.success {
+      background: rgba(16, 172, 132, 0.1);
+      border: 1px solid var(--accent);
+      color: #10ac84;
+    }
+    .status-alert.warning {
+      background: rgba(245, 159, 0, 0.1);
+      border: 1px solid var(--warning);
+      color: #f59f00;
+    }
+    .capture-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 16px 0;
+    }
+    .capture-thumb-box {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      height: 90px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      overflow: hidden;
+      position: relative;
+    }
+    .capture-thumb-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .capture-thumb-box span {
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="self-reg-wrapper">
+    <div class="self-reg-card">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <img src="assets/img/logo.jpg" alt="KCET logo" style="width: 48px; height: 48px; object-fit: contain; margin-bottom: 8px;">
+        <h2 style="font-size: 1.25rem; font-weight: 700; margin: 0;">Student Biometric Self-Registration</h2>
+        <p style="color: var(--muted); font-size: 0.85rem; margin-top: 4px;">Kamaraj College of Engineering & Technology</p>
+      </div>
+
+      <!-- Firebase Disconnected Warning (Addition 2) -->
+      <div id="firebaseDisconnectedCard" class="status-alert error" style="display: none;">
+        <span>⚠️</span>
+        <div>
+          <strong>Registration Temporarily Unavailable</strong><br>
+          <small>Database connection is offline. Please contact your teacher to complete your registration in person.</small>
+        </div>
+      </div>
+
+      <!-- Invalid/Expired Link Alert -->
+      <div id="invalidLinkCard" class="status-alert error" style="display: none;">
+        <span>🚫</span>
+        <div>
+          <strong>Invalid or Expired Link</strong><br>
+          <small id="invalidLinkText">This self-registration link is expired, revoked, or invalid. Please ask your teacher to generate a new registration link.</small>
+        </div>
+      </div>
+
+      <!-- Submitted Confirmation -->
+      <div id="submittedSuccessCard" class="status-alert success" style="display: none;">
+        <span>✅</span>
+        <div>
+          <strong>Submission Received!</strong><br>
+          <small>Your 3-angle facial biometric capture has been submitted to your teacher for approval. Once reviewed, your attendance check-in profile will become active.</small>
+        </div>
+      </div>
+
+      <!-- Main Self-Registration Form -->
+      <div id="selfRegFormContainer">
+        <!-- Student Selection -->
+        <label class="login-label" style="margin-bottom: 16px;">
+          <span>Select Your Name (Class: <strong id="linkClassBadge">...</strong>)</span>
+          <select id="selfStudentSelect" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 0.9rem;">
+            <option value="">-- Loading unregistered students... --</option>
+          </select>
+          <small style="font-size: 0.75rem; color: var(--muted); margin-top: 4px; display: block;">Only students in this class who have not yet registered or submitted face profiles are listed.</small>
+        </label>
+
+        <!-- Selected Student Summary -->
+        <div id="selectedStudentSummary" style="display: none; background: rgba(16, 172, 132, 0.05); border: 1px solid var(--line); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 0.85rem;">
+          <div><strong>Student ID:</strong> <span id="sumStudentId"></span></div>
+          <div><strong>Department:</strong> <span id="sumDept"></span></div>
+        </div>
+
+        <!-- Viewfinder & Camera -->
+        <div class="capture-guide glass" style="margin-bottom: 16px; padding: 16px;">
+          <div class="alignment-helper" id="selfCameraFrame" style="height: 240px;">
+            <video id="selfVideo" autoplay muted playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+            <canvas id="selfOverlayCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%;"></canvas>
+            <div class="face-guide"></div>
+            <div class="camera-placeholder" id="selfCameraPlaceholder">
+              <strong>Webcam Preview</strong>
+              <small>Click "Start Camera" to initialize face capture</small>
+            </div>
+          </div>
+
+          <div style="margin-top: 12px; text-align: center;">
+            <span id="selfInstructionText" style="font-weight: 600; font-size: 0.85rem; color: var(--accent);">Angle 1: Look directly at the camera</span>
+          </div>
+
+          <!-- Thumbnails Grid -->
+          <div class="capture-preview-grid">
+            <div class="capture-thumb-box" id="selfThumb1">
+              <span>Angle 1 (Center)</span>
+            </div>
+            <div class="capture-thumb-box" id="selfThumb2">
+              <span>Angle 2 (Left)</span>
+            </div>
+            <div class="capture-thumb-box" id="selfThumb3">
+              <span>Angle 3 (Right)</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button class="secondary-btn" id="selfStartCameraBtn" type="button" style="flex: 1;" onclick="startSelfCamera()">Start Camera</button>
+          <button class="primary-btn" id="selfCaptureBtn" type="button" style="flex: 1;" onclick="captureSelfAngle()" disabled>Capture Angle (0/3)</button>
+        </div>
+
+        <button class="primary-btn" id="selfSubmitBtn" type="button" style="width: 100%; margin-top: 12px; background: var(--accent);" onclick="submitSelfRegistration()" disabled>
+          Submit for Teacher Approval
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <script>
+    let selfState = {
+      token: null,
+      linkData: null,
+      cameraActive: false,
+      capturedSnapshots: [],
+      capturedDescriptors: [],
+      students: []
+    };
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      selfState.token = urlParams.get('token');
+
+      // Addition 2: Check Firebase connection on load before proceeding
+      if (!window.firebase || !CONFIG.firebaseConfig || !CONFIG.firebaseConfig.apiKey) {
+        showFirebaseDisconnected();
+        return;
+      }
+
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(CONFIG.firebaseConfig);
+        }
+        const db = firebase.firestore();
+        
+        // Addition 2: Perform network connectivity check
+        await db.collection('registrationLinks').limit(1).get();
+      } catch (err) {
+        console.error("Firebase connection check failed:", err);
+        showFirebaseDisconnected();
+        return;
+      }
+
+      if (!selfState.token) {
+        showInvalidLink("No registration token specified in URL.");
+        return;
+      }
+
+      await validateTokenAndLoadForm();
+    });
+
+    function showFirebaseDisconnected() {
+      document.getElementById('firebaseDisconnectedCard').style.display = 'flex';
+      document.getElementById('selfRegFormContainer').style.display = 'none';
+    }
+
+    function showInvalidLink(msg) {
+      document.getElementById('invalidLinkCard').style.display = 'flex';
+      if (msg) document.getElementById('invalidLinkText').textContent = msg;
+      document.getElementById('selfRegFormContainer').style.display = 'none';
+    }
+
+    async function validateTokenAndLoadForm() {
+      const db = firebase.firestore();
+      try {
+        const linkDoc = await db.collection('registrationLinks').doc(selfState.token).get();
+        if (!linkDoc.exists) {
+          showInvalidLink("This registration link was not found.");
+          return;
+        }
+
+        const data = linkDoc.data();
+        const now = new Date();
+        const expiresAt = new Date(data.expiresAt);
+
+        if (!data.active || expiresAt <= now) {
+          showInvalidLink("This registration link has expired or been revoked by the teacher.");
+          return;
+        }
+
+        selfState.linkData = data;
+        document.getElementById('linkClassBadge').textContent = data.class.toUpperCase();
+
+        // Fetch students roster for this class
+        await loadUnregisteredStudents(data.class);
+      } catch (err) {
+        console.error("Token validation error:", err);
+        showInvalidLink("Error validating token from server.");
+      }
+    }
+
+    async function loadUnregisteredStudents(classCode) {
+      const db = firebase.firestore();
+      
+      // Load all students for class from local list or cloud
+      const allStudents = getLocalStudentsList();
+      const classStudents = allStudents.filter(s => s.year.trim().toLowerCase() === classCode.toLowerCase());
+
+      // Fetch pending registrations for this class to filter them out
+      const pendingSnapshot = await db.collection('pendingRegistrations')
+        .where('class', '==', classCode.toLowerCase())
+        .get();
+      
+      const pendingStudentIds = [];
+      pendingSnapshot.forEach(doc => {
+        pendingStudentIds.push(doc.data().studentId);
+      });
+
+      // Filter out students who ALREADY have face descriptors OR have pending registrations
+      const unregistered = classStudents.filter(s => {
+        const hasDescriptor = !!state.descriptors[s.id];
+        const isPending = pendingStudentIds.includes(s.id);
+        return !hasDescriptor && !isPending;
+      });
+
+      const select = document.getElementById('selfStudentSelect');
+      select.innerHTML = '';
+
+      if (unregistered.length === 0) {
+        select.innerHTML = '<option value="">-- All students in this class are registered! --</option>';
+        select.disabled = true;
+        return;
+      }
+
+      select.innerHTML = '<option value="">-- Choose your name --</option>' + 
+        unregistered.map(s => `<option value="${s.id}">${escapeHtml(s.name)} (${s.studentId})</option>`).join('');
+
+      selfState.students = unregistered;
+
+      select.addEventListener('change', (e) => {
+        const selectedId = e.target.value;
+        const student = unregistered.find(s => s.id === selectedId);
+        const summary = document.getElementById('selectedStudentSummary');
+        
+        if (student) {
+          document.getElementById('sumStudentId').textContent = student.studentId;
+          document.getElementById('sumDept').textContent = student.dept;
+          summary.style.display = 'block';
+          document.getElementById('selfStartCameraBtn').disabled = false;
+        } else {
+          summary.style.display = 'none';
+          document.getElementById('selfStartCameraBtn').disabled = true;
+        }
+      });
+    }
+
+    async function startSelfCamera() {
+      try {
+        const video = document.getElementById('selfVideo');
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+        video.srcObject = stream;
+        document.getElementById('selfCameraPlaceholder').style.display = 'none';
+        selfState.cameraActive = true;
+        document.getElementById('selfCaptureBtn').disabled = false;
+        toast("Camera Active", "Position your face inside the central guide oval.");
+      } catch (err) {
+        toast("Camera Error", "Webcam access denied.");
+      }
+    }
+
+    async function captureSelfAngle() {
+      if (!selfState.cameraActive) return;
+      const video = document.getElementById('selfVideo');
+      
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const snapshot = canvas.toDataURL("image/jpeg", 0.85);
+
+      const img = document.createElement("img");
+      img.src = snapshot;
+
+      toast("Analyzing Face", "Validating facial biometric features...");
+
+      img.onload = async () => {
+        try {
+          const detection = await faceapi.detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }))
+            .withFaceLandmarks()
+            .withFaceDescriptor();
+
+          if (!detection) {
+            toast("Face Not Detected", "Align your face clearly inside the oval and try again.", "warning");
+            return;
+          }
+
+          const angleIndex = selfState.capturedSnapshots.length;
+          selfState.capturedSnapshots.push(snapshot);
+          selfState.capturedDescriptors.push(Array.from(detection.descriptor));
+
+          // Update thumbnail
+          const thumbBox = document.getElementById(`selfThumb${angleIndex + 1}`);
+          thumbBox.innerHTML = `<img src="${snapshot}" alt="Angle ${angleIndex + 1}">`;
+
+          const count = selfState.capturedSnapshots.length;
+          document.getElementById('selfCaptureBtn').textContent = `Capture Angle (${count}/3)`;
+
+          const instructions = [
+            "Angle 1: Look directly at camera",
+            "Angle 2: Turn head slightly LEFT",
+            "Angle 3: Turn head slightly RIGHT",
+            "All 3 angles captured! Ready to submit."
+          ];
+          document.getElementById('selfInstructionText').textContent = instructions[count] || instructions[3];
+
+          if (count >= 3) {
+            document.getElementById('selfCaptureBtn').disabled = true;
+            document.getElementById('selfSubmitBtn').disabled = false;
+            toast("Captures Complete", "Click Submit for Teacher Approval.");
+          } else {
+            toast(`Angle ${count} Saved`, instructions[count]);
+          }
+        } catch (err) {
+          console.error("Self capture error:", err);
+          toast("Analysis Failed", "Could not process biometric scan.");
+        }
+      };
+    }
+
+    async function submitSelfRegistration() {
+      const studentId = document.getElementById('selfStudentSelect').value;
+      if (!studentId || selfState.capturedDescriptors.length < 3) {
+        toast("Incomplete Form", "Please select your name and capture all 3 angles.");
+        return;
+      }
+
+      const student = selfState.students.find(s => s.id === studentId);
+      if (!student) return;
+
+      document.getElementById('selfSubmitBtn').disabled = true;
+      document.getElementById('selfSubmitBtn').textContent = "Uploading & Submitting...";
+
+      try {
+        const db = firebase.firestore();
+
+        // Addition 1: Upload 3 captured photos to Firebase Storage if active, or store clean download URLs
+        const photoUrls = [];
+        if (window.firebase.storage && firebase.apps.length) {
+          try {
+            const storage = firebase.storage();
+            for (let i = 0; i < selfState.capturedSnapshots.length; i++) {
+              const snap = selfState.capturedSnapshots[i];
+              const ref = storage.ref().child(`pendingRegistrations/${selfState.token}/${studentId}/angle${i+1}.jpg`);
+              await ref.putString(snap, 'data_url');
+              const url = await ref.getDownloadURL();
+              photoUrls.push(url);
+            }
+          } catch (storageErr) {
+            console.warn("Storage upload fallback:", storageErr);
+            // Fallback to inline snapshots if storage unconfigured
+            photoUrls.push(...selfState.capturedSnapshots);
+          }
+        } else {
+          photoUrls.push(...selfState.capturedSnapshots);
+        }
+
+        // Average descriptors into 128-float vector
+        const numDesc = selfState.capturedDescriptors.length;
+        const avgDescriptor = Array.from({ length: 128 }, (_, idx) => {
+          const sum = selfState.capturedDescriptors.reduce((acc, desc) => acc + desc[idx], 0);
+          return sum / numDesc;
+        });
+
+        // Write document to pendingRegistrations collection
+        await db.collection('pendingRegistrations').add({
+          token: selfState.token,
+          class: selfState.linkData.class.toLowerCase(),
+          studentId: student.id,
+          studentName: student.name,
+          rollNo: student.studentId,
+          dept: student.dept,
+          year: student.year,
+          descriptor: avgDescriptor,
+          photos: photoUrls,
+          submittedAt: new Date().toISOString(),
+          status: 'pending'
+        });
+
+        document.getElementById('selfRegFormContainer').style.display = 'none';
+        document.getElementById('submittedSuccessCard').style.display = 'flex';
+        toast("Submitted", "Your biometric registration has been sent for teacher approval.");
+      } catch (err) {
+        console.error("Submission error:", err);
+        toast("Submission Failed", "Error saving registration. Please try again.");
+        document.getElementById('selfSubmitBtn').disabled = false;
+        document.getElementById('selfSubmitBtn').textContent = "Submit for Teacher Approval";
+      }
+    }
+  </script>
+</body>
+</html>

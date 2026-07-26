@@ -15,7 +15,14 @@
   <script defer src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script defer src="assets/js/app.js"></script>
+  <!-- Sentry Error Monitoring -->
+  <script
+    src="https://js.sentry-cdn.com/3bb7ce58ea2c267d9f4e41393082048e.min.js"
+    crossorigin="anonymous"
+  ></script>
   <script>
     // Admin route protection
     if (sessionStorage.getItem('isAdmin') !== 'true') {
@@ -149,6 +156,120 @@
         </div>
       </section>
 
+      <!-- Self-Registration Shareable Links & Approval Queue -->
+      <section class="section-pad" id="selfRegistrationManager">
+        <div class="section-heading" data-aos="fade">
+          <p class="eyebrow">Self-Service Access</p>
+          <h2>Student Self-Registration Portal</h2>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+          <!-- Link Generator Card -->
+          <div class="registration-card glass" data-aos="fade">
+            <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: var(--text);">🔗 Shareable Registration Link</h3>
+            <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">
+              Generate a temporary 24-hour self-registration link for students in your class to capture their face biometrics from their own mobile or desktop devices.
+            </p>
+            <button class="primary-btn" id="generateLinkBtn" type="button" onclick="generateRegistrationLink()" style="width: 100%; margin-bottom: 16px;">
+              Generate New Registration Link
+            </button>
+            <div id="latestGeneratedLinkContainer" style="display: none; background: rgba(16,172,132,0.1); border: 1px solid var(--accent); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 16px;">
+              <span style="font-size: 0.75rem; color: var(--accent); font-weight: 700;">LATEST GENERATED LINK</span>
+              <div style="display: flex; gap: 8px; margin-top: 6px;">
+                <input id="generatedLinkInput" type="text" readonly style="font-size: 0.8rem; flex: 1;">
+                <button class="primary-btn" onclick="copyGeneratedLink()" type="button" style="padding: 6px 12px; font-size: 0.8rem;">Copy Link</button>
+              </div>
+            </div>
+
+            <h4 style="font-size: 0.9rem; color: var(--muted); margin-bottom: 10px;">Active Links for Class</h4>
+            <div id="activeLinksContainer" style="max-height: 180px; overflow-y: auto;">
+              <p style="font-size: 0.8rem; color: var(--muted);">Loading active links...</p>
+            </div>
+          </div>
+
+          <!-- Pending Approval Queue -->
+          <div class="registration-card glass" data-aos="fade">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <h3 style="font-size: 1.1rem; color: var(--text); margin: 0;">⏳ Pending Approval Queue</h3>
+              <button class="secondary-btn" onclick="renderPendingQueue()" type="button" style="padding: 4px 10px; font-size: 0.75rem;">Refresh Queue</button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">
+              Review self-submitted 3-angle facial captures from students before activating their profile.
+            </p>
+            <div id="pendingQueueContainer" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+              <p style="font-size: 0.8rem; color: var(--muted);">Loading pending submissions...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bulk Roster Import Section -->
+      <section class="section-pad" id="bulkRosterSection">
+        <div class="section-heading" data-aos="fade">
+          <p class="eyebrow">Batch Onboarding</p>
+          <h2>Bulk Student Roster Import</h2>
+        </div>
+
+        <div class="registration-card glass" data-aos="fade" style="margin-bottom: 30px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div>
+              <h3 style="font-size: 1.1rem; color: var(--text); margin: 0;">📁 Upload Student Roster (.xlsx / .csv)</h3>
+              <p style="font-size: 0.85rem; color: var(--muted); margin-top: 4px;">
+                Import multiple student records in bulk from an Excel spreadsheet or CSV file. Imported students will be added without a face descriptor, displaying the "Face not registered" badge until they register.
+              </p>
+            </div>
+            <button class="secondary-btn" id="downloadRosterTemplateBtn" onclick="downloadRosterTemplate()" type="button" style="white-space: nowrap;">
+              📥 Download Excel Template
+            </button>
+          </div>
+
+          <!-- Dropzone / File Select -->
+          <div style="border: 2px dashed var(--line); border-radius: var(--radius-sm); padding: 24px; text-align: center; background: var(--bg); margin-bottom: 16px;">
+            <input type="file" id="bulkRosterFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleRosterFileSelect(event)">
+            <label for="bulkRosterFileInput" style="cursor: pointer; display: block;">
+              <span style="font-size: 1.8rem; display: block; margin-bottom: 6px;">📄</span>
+              <strong style="font-size: 0.95rem; color: var(--text);">Click to choose Excel (.xlsx) or CSV file</strong>
+              <span style="font-size: 0.8rem; color: var(--muted); display: block; margin-top: 4px;">Required columns: Name, StudentID, Department, Class</span>
+            </label>
+          </div>
+
+          <!-- Error Alert Box -->
+          <div id="bulkRosterErrorBox" style="display: none; background: rgba(224, 49, 49, 0.1); border: 1px solid var(--danger); color: #e03131; padding: 14px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 0.85rem; line-height: 1.4;">
+          </div>
+
+          <!-- Preview & Validation Container -->
+          <div id="bulkRosterPreviewContainer" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h4 id="bulkRosterSummaryHeading" style="font-size: 0.95rem; color: var(--text); margin: 0;"></h4>
+              <button class="primary-btn" id="confirmRosterImportBtn" onclick="confirmRosterImport()" type="button">Confirm Import</button>
+            </div>
+
+            <div style="max-height: 280px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--radius-sm); margin-bottom: 16px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+                <thead>
+                  <tr style="background: var(--surface); border-bottom: 1px solid var(--line); text-align: left;">
+                    <th style="padding: 8px;">#</th>
+                    <th style="padding: 8px;">Name</th>
+                    <th style="padding: 8px;">Student ID</th>
+                    <th style="padding: 8px;">Department</th>
+                    <th style="padding: 8px;">Class</th>
+                    <th style="padding: 8px;">Import Status</th>
+                  </tr>
+                </thead>
+                <tbody id="bulkRosterPreviewBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Final Summary Box -->
+          <div id="bulkRosterFinalSummary" style="display: none; background: rgba(16, 172, 132, 0.1); border: 1px solid var(--accent); color: var(--text); padding: 16px; border-radius: var(--radius-sm); font-size: 0.85rem;">
+            <h4 id="finalSummaryTitle" style="font-size: 0.95rem; color: #10ac84; margin-top: 0; margin-bottom: 8px;"></h4>
+            <div id="finalSummaryDetails" style="font-size: 0.8rem; color: var(--muted);"></div>
+          </div>
+        </div>
+      </section>
+
       <!-- History Table records management -->
       <section class="section-pad" id="records">
         <div class="section-heading" data-aos="fade">
@@ -195,7 +316,29 @@
     <footer>
       <p>&copy; <span id="year"></span> Kamaraj College of Engineering & Technology. AI Smart Campus Student Attendance Portal. <a href="dev_access.html" class="footer-link">Developer Access</a></p>
     </footer>
-  </div>
+      <div class="glass form-card" style="margin-top: 24px;">
+        <details>
+          <summary style="cursor: pointer; font-weight: 600; font-size: 0.95rem; color: var(--accent);">🛠 Admin Match Debug Log (Last 20 Scans)</summary>
+          <div style="overflow-x: auto; margin-top: 12px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+              <thead>
+                <tr style="border-bottom: 1px solid var(--line); text-align: left;">
+                  <th style="padding: 6px;">Time</th>
+                  <th style="padding: 6px;">Matched Student ID</th>
+                  <th style="padding: 6px;">Best Distance</th>
+                  <th style="padding: 6px;">Runner-Up Distance</th>
+                  <th style="padding: 6px;">GPS</th>
+                </tr>
+              </thead>
+              <tbody id="debugMatchTable">
+                <tr>
+                  <td colspan="5" style="padding: 10px; text-align: center; color: var(--muted);">No scan attempts logged yet.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+      </div>
 
   <div class="toast-stack" id="toastStack" aria-live="polite"></div>
   
