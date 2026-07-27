@@ -399,56 +399,193 @@ async function loadFaceModels() {
   }
 }
 
+function getDecimalPlaces(val) {
+  if (val === null || val === undefined) return 0;
+  const str = String(val).trim();
+  if (!str.includes('.')) return 0;
+  return str.split('.')[1].length;
+}
+
+function distanceToSegmentMeters(pLat, pLon, lat1, lon1, lat2, lon2) {
+  const latRad = (pLat * Math.PI) / 180;
+  const metersPerDegreeLat = 111139;
+  const metersPerDegreeLon = 111139 * Math.cos(latRad);
+
+  const px = 0;
+  const py = 0;
+  const x1 = (lon1 - pLon) * metersPerDegreeLon;
+  const y1 = (lat1 - pLat) * metersPerDegreeLat;
+  const x2 = (lon2 - pLon) * metersPerDegreeLon;
+  const y2 = (lat2 - pLat) * metersPerDegreeLat;
+
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+
+  if (dx === 0 && dy === 0) {
+    return Math.sqrt(x1 * x1 + y1 * y1);
+  }
+
+  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)));
+  const projX = x1 + t * dx;
+  const projY = y1 + t * dy;
+
+  return Math.sqrt(projX * projX + projY * projY);
+}
+
+function minDistanceToPolygonMeters(lat, lon, polygon) {
+  if (!polygon || polygon.length < 3) return Infinity;
+  let minDistance = Infinity;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const p1 = polygon[j];
+    const p2 = polygon[i];
+    const dist = distanceToSegmentMeters(lat, lon, p1[0], p1[1], p2[0], p2[1]);
+    if (dist < minDistance) minDistance = dist;
+  }
+  return minDistance;
+}
+
+function logGpsAudit(inside, reason, accuracy, distanceOutside) {
+  const entry = {
+    timestamp: new Date().toISOString(),
+    matchedId: inside ? 'GPS_VERIFIED' : 'GPS_REJECTED',
+    winningDistance: inside ? 0 : Number((distanceOutside || 0).toFixed(2)),
+    runnerUpDistance: 0, // Strict polygon - 0m buffer allowed
+    gpsVerified: inside,
+    accuracy: accuracy !== null && accuracy !== undefined ? Number(accuracy.toFixed(1)) : null,
+    reason: reason
+  };
+  state.matchLog.push(entry);
+  if (state.matchLog.length > 100) {
+    state.matchLog = state.matchLog.slice(-100);
+  }
+  localStorage.setItem("matchDebugLog", JSON.stringify(state.matchLog));
+  renderDebugPanel();
+}
+
 function verifyLocation() {
   if (!navigator.geolocation) {
     setCampusStatus(false, null, null, null, "Geolocation is not supported by your browser.");
     return;
   }
 
-  elements.campusStatus.textContent = "Verifying GPS...";
-  elements.gpsIndicator.style.background = "var(--warning)";
+  elements.campusStatus.textContent = "Sampling GPS (4s window)...";
+  if (elements.gpsIndicator) elements.gpsIndicator.style.background = "var(--warning)";
 
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      try {
-        const { latitude, longitude } = position.coords;
-        const config = getActiveConfiguration();
-        if (!config) return; // getActiveConfiguration already showed error
-        const centerLat = (config.minLat + config.maxLat) / 2;
-        const centerLon = (config.minLon + config.maxLon) / 2;
-        const distance = getDistanceMeters(latitude, longitude, centerLat, centerLon);
-        
-        // Proximity buffer: Mark student inside if within polygon bounds OR within 30 meters of center
-        const inside = config.polygon 
-          ? (isPointInPolygon(latitude, longitude, config.polygon) || distance <= 30)
-          : (latitude >= config.minLat && latitude <= config.maxLat && longitude >= config.minLon && longitude <= config.maxLon || distance <= 30);
-        
-        setCampusStatus(inside, latitude, longitude, distance);
-        
-        if (state.map) {
-          if (!state.userMarker) {
-            state.userMarker = L.circleMarker([latitude, longitude], {
-              radius: 6,
-              color: "#ffffff",
-              weight: 2,
-              fillColor: inside ? "#2b8a3e" : "#c92a2a",
-              fillOpacity: 1
-            }).addTo(state.map);
-          } else {
-            state.userMarker.setLatLng([latitude, longitude]);
-            state.userMarker.setStyle({ fillColor: inside ? "#2b8a3e" : "#c92a2a" });
-          }
-          state.map.setView([latitude, longitude], 19);
-        }
-      } catch (err) {
-        console.error("GPS verification error:", err);
-        if (typeof Sentry !== 'undefined') Sentry.captureException(err);
-        setCampusStatus(false, null, null, null, "GPS verification failed unexpectedly.");
+  const samples = [];
+  const startTime = Date.now();
+  const sampleDurationMs = 4000;
+  let watchId = null;
+
+  const processBestSample = () => {
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+
+    if (!samples.length) {
+      setCampusStatus(false, null, null, null, "GPS verification failed. No valid location reading received.");
+      return;
+    }
+
+    // Pick the single BEST reading (lowest accuracy value) from the batch
+    samples.sort((a, b) => a.coords.accuracy - b.coords.accuracy);
+    const bestReading = samples[0];
+
+    const rawLatStr = bestReading.coords.latitude !== undefined && bestReading.coords.latitude !== null ? bestReading.coords.latitude.toString() : "";
+    const rawLonStr = bestReading.coords.longitude !== undefined && bestReading.coords.longitude !== null ? bestReading.coords.longitude.toString() : "";
+    const latitude = bestReading.coords.latitude;
+    const longitude = bestReading.coords.longitude;
+    const accuracy = bestReading.coords.accuracy;
+
+    const config = getActiveConfiguration();
+    if (!config) return;
+
+    const centerLat = (config.minLat + config.maxLat) / 2;
+    const centerLon = (config.minLon + config.maxLon) / 2;
+    const distanceToCenter = getDistanceMeters(latitude, longitude, centerLat, centerLon);
+
+    // 1. Accuracy Check (Missing/0/NaN rejected)
+    if (accuracy === undefined || accuracy === null || isNaN(accuracy) || accuracy <= 0) {
+      const reason = "REJECTED: GPS accuracy reading missing or invalid. Please retry.";
+      setCampusStatus(false, latitude, longitude, distanceToCenter, reason);
+      logGpsAudit(false, reason, accuracy, distanceToCenter);
+      return;
+    }
+
+    // 2. Precision Check (Fewer than 4 decimal digits rejected)
+    if (getDecimalPlaces(rawLatStr) < 4 || getDecimalPlaces(rawLonStr) < 4) {
+      const reason = `REJECTED: Coarse GPS reading (fewer than 4 decimal digits). Accuracy: ${accuracy.toFixed(1)}m. Please retry.`;
+      setCampusStatus(false, latitude, longitude, distanceToCenter, reason);
+      logGpsAudit(false, reason, accuracy, distanceToCenter);
+      return;
+    }
+
+    // 3. Strict Polygon or Bounding Box Check (NO BUFFER, NO RADIUS, NO EXPANSION)
+    let inside = false;
+    let distanceOutside = 0;
+
+    if (config.polygon && Array.isArray(config.polygon) && config.polygon.length >= 3) {
+      inside = isPointInPolygon(latitude, longitude, config.polygon);
+      if (!inside) {
+        distanceOutside = minDistanceToPolygonMeters(latitude, longitude, config.polygon);
+      }
+    } else {
+      // Bounding box fallback with NO expansion whatsoever
+      inside = (latitude >= config.minLat && latitude <= config.maxLat && longitude >= config.minLon && longitude <= config.maxLon);
+      distanceOutside = inside ? 0 : distanceToCenter;
+    }
+
+    // 4. Clear Unambiguous Messages & Audit Log
+    const customMessage = inside
+      ? `Class location verified. Coordinates match classroom polygon bounds.`
+      : `You appear to be outside the classroom boundary. Please move fully inside the room and tap Verify GPS again.`;
+
+    const reason = inside
+      ? `PASS: Directly inside classroom polygon (Best Accuracy: ${accuracy.toFixed(1)}m from ${samples.length} samples)`
+      : `REJECTED: ${distanceOutside.toFixed(1)}m outside classroom boundary (Best Accuracy: ${accuracy.toFixed(1)}m from ${samples.length} samples)`;
+
+    setCampusStatus(inside, latitude, longitude, distanceToCenter, customMessage);
+    logGpsAudit(inside, reason, accuracy, distanceOutside);
+
+    if (state.map) {
+      if (!state.userMarker) {
+        state.userMarker = L.circleMarker([latitude, longitude], {
+          radius: 6,
+          color: "#ffffff",
+          weight: 2,
+          fillColor: inside ? "#2b8a3e" : "#c92a2a",
+          fillOpacity: 1
+        }).addTo(state.map);
+      } else {
+        state.userMarker.setLatLng([latitude, longitude]);
+        state.userMarker.setStyle({ fillColor: inside ? "#2b8a3e" : "#c92a2a" });
+      }
+      state.map.setView([latitude, longitude], 19);
+    }
+  };
+
+  watchId = navigator.geolocation.watchPosition(
+    (pos) => {
+      samples.push(pos);
+      if (Date.now() - startTime >= sampleDurationMs) {
+        processBestSample();
       }
     },
-    () => setCampusStatus(false, null, null, null, "GPS access denied. Please enable location privileges."),
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    (err) => {
+      if (samples.length) {
+        processBestSample();
+      } else {
+        setCampusStatus(false, null, null, null, `GPS access error (${err.message}). Please enable location privileges.`);
+      }
+    },
+    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
   );
+
+  setTimeout(() => {
+    if (watchId !== null) {
+      processBestSample();
+    }
+  }, sampleDurationMs + 500);
 }
 
 function simulateLocation() {
@@ -886,6 +1023,11 @@ function getDateKey(date = new Date()) {
   return date.toISOString().slice(0, 10);
 }
 
+function formatAttendanceBadgeHtml(status) {
+  const statusClass = status ? status.toLowerCase() : 'absent';
+  return `<span class="badge ${statusClass}">${escapeHtml(status)}</span>`;
+}
+
 function renderAttendanceTable() {
   if (!elements.attendanceTable) return;
   const search = elements.searchInput ? elements.searchInput.value.trim().toLowerCase() : "";
@@ -914,7 +1056,6 @@ function renderAttendanceTable() {
     
     // Morning shift checking (Self geofenced check-in)
     const morningStatus = record.morning || "Absent";
-    const morningClass = morningStatus.toLowerCase();
     
     // Afternoon shift checking (Defaults to Present if morning checked in, or if afternoon checked in)
     let afternoonStatus = "Absent";
@@ -923,7 +1064,6 @@ function renderAttendanceTable() {
     } else if (record.afternoonTimestamp) {
       afternoonStatus = record.afternoon || "Present";
     }
-    const afternoonClass = afternoonStatus.toLowerCase();
     
     const timestamp = record.morningTimestamp ? new Date(record.morningTimestamp).toLocaleString() : "Awaiting check-in";
     
@@ -940,7 +1080,7 @@ function renderAttendanceTable() {
         <td>${escapeHtml(student.studentId)}</td>
         <td>${escapeHtml(student.dept)}</td>
         <td>${escapeHtml(student.year)}</td>
-        <td><span class="badge ${morningClass}">${morningStatus}</span></td>
+        <td>${formatAttendanceBadgeHtml(morningStatus)}</td>
     `;
     
     if (isAdminPage) {
@@ -950,7 +1090,7 @@ function renderAttendanceTable() {
       rowHtml += `
         <td>
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="badge ${afternoonClass}">${afternoonStatus}</span>
+            ${formatAttendanceBadgeHtml(afternoonStatus)}
             <button class="icon-btn" onclick="toggleAfternoonStatus('${student.id}')" type="button" style="padding: 2px 6px; font-size: 0.65rem; min-width: 50px;" ${canToggle ? '' : 'disabled title="Morning or Afternoon check-in required"'}>Toggle</button>
           </div>
         </td>
@@ -970,7 +1110,7 @@ function renderAttendanceTable() {
       `;
     } else {
       rowHtml += `
-        <td><span class="badge ${afternoonClass}">${afternoonStatus}</span></td>
+        <td>${formatAttendanceBadgeHtml(afternoonStatus)}</td>
       `;
     }
     
