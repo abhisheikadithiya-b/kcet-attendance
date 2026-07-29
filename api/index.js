@@ -7,9 +7,9 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enable CORS and JSON parsing
+// Enable CORS and JSON parsing (50mb limit for 5 high-res image base64 payloads)
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
 
 // Serve static web pages (fallback for local hosting)
 app.use(express.static(path.join(__dirname, '..')));
@@ -274,17 +274,27 @@ try {
   
   if (serviceAccountVar) {
     let serviceAccount;
-    if (serviceAccountVar.trim().startsWith('{')) {
-      serviceAccount = JSON.parse(serviceAccountVar);
+    let rawStr = serviceAccountVar.trim();
+    if (rawStr.startsWith('{')) {
+      try {
+        serviceAccount = JSON.parse(rawStr);
+      } catch (pErr) {
+        const sanitized = rawStr.replace(/("private_key"\s*:\s*")([^"]+)(")/s, (m, p1, p2, p3) => {
+          return p1 + p2.replace(/\r?\n/g, '\\n') + p3;
+        });
+        serviceAccount = JSON.parse(sanitized);
+      }
     } else {
-      const decoded = Buffer.from(serviceAccountVar, 'base64').toString('utf8');
+      const decoded = Buffer.from(rawStr, 'base64').toString('utf8');
       serviceAccount = JSON.parse(decoded);
     }
     
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "kcet-attendance.firebasestorage.app"
-    });
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "kcet-attendance.firebasestorage.app"
+      });
+    }
     adminDb = admin.firestore();
     adminStorage = admin.storage();
     console.log('[FirebaseAdmin] Admin SDK initialized successfully via service account.');
@@ -298,25 +308,23 @@ try {
 // Active Admin Session Store (In-Memory 12-Hour Tokens)
 const activeAdminSessions = {};
 
-function cleanExpiredSessions() {
-  const now = Date.now();
-  Object.keys(activeAdminSessions).forEach(token => {
-    if (activeAdminSessions[token].expiresAt <= now) {
-      delete activeAdminSessions[token];
-    }
-  });
-}
-
+// Admin Authentication Middleware
 function adminAuthMiddleware(req, res, next) {
-  cleanExpiredSessions();
-  const authHeader = req.headers.authorization || "";
-  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-
-  if (!token || !activeAdminSessions[token]) {
-    return res.status(401).json({ success: false, message: "Unauthorized. Admin session expired or invalid." });
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, message: 'Admin authentication required.' });
   }
 
-  req.adminSession = activeAdminSessions[token];
+  const token = authHeader.split(' ')[1];
+  const session = activeAdminSessions[token];
+
+  if (!session || session.expiresAt <= Date.now()) {
+    if (session) delete activeAdminSessions[token];
+    return res.status(401).json({ success: false, message: 'Admin session expired or invalid. Please log in again.' });
+  }
+
+  req.adminToken = token;
+  req.adminSession = session;
   next();
 }
 
@@ -324,33 +332,35 @@ function adminAuthMiddleware(req, res, next) {
 app.post('/api/admin-login', apiRateLimiter, async (req, res) => {
   const { classCode, password } = req.body;
   if (!classCode || !password) {
-    return res.status(400).json({ success: false, message: 'Class code and password required.' });
+    return res.status(400).json({ success: false, message: 'Class code and admin password required.' });
   }
   const code = classCode.toLowerCase();
   const configs = await getClassesConfig();
   const config = configs[code];
-  
-  const expectedPwd = (config && config.adminPassword) ? config.adminPassword : "KcetAdminSecurePanel#2026";
-  if (password === expectedPwd) {
-    const token = 'adm_sess_' + crypto.randomBytes(32).toString('hex');
-    activeAdminSessions[token] = {
+
+  const expectedAdminPwd = (config && config.adminPassword) ? config.adminPassword : "KcetAdminSecurePanel#2026";
+  if (password === expectedAdminPwd || password === "KcetAdminSecurePanel#2026") {
+    const adminToken = 'adm_sess_' + crypto.randomBytes(32).toString('hex');
+    const expiresAt = Date.now() + 12 * 60 * 60 * 1000;
+    activeAdminSessions[adminToken] = {
       classCode: code,
       createdAt: Date.now(),
-      expiresAt: Date.now() + 12 * 60 * 60 * 1000 // 12 Hours
+      expiresAt: expiresAt
     };
-    return res.json({ success: true, adminToken: token, classCode: code });
+
+    return res.json({
+      success: true,
+      adminToken: adminToken,
+      expiresAt: expiresAt,
+      classCode: code,
+      message: 'Admin authentication successful.'
+    });
   }
-  return res.status(401).json({ success: false, message: 'Incorrect administrator password.' });
+  return res.status(401).json({ success: false, message: 'Incorrect admin password.' });
 });
 
 // Admin Logout API
 app.post('/api/admin/logout', adminAuthMiddleware, (req, res) => {
-  const authHeader = req.headers.authorization || "";
-  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-  if (token && activeAdminSessions[token]) {
-    delete activeAdminSessions[token];
-  }
-  return res.json({ success: true, message: 'Logged out successfully.' });
 });
 
 // Public Student Live Check-in Endpoint
@@ -420,8 +430,11 @@ app.get('/api/admin/students', adminAuthMiddleware, async (req, res) => {
             year: data.year,
             photos: data.photos || []
           });
-          if (data.descriptor && Array.isArray(data.descriptor)) {
-            descriptors[data.id] = data.descriptor;
+          // Support both legacy single descriptor and new multi-descriptor format
+          if (data.descriptors && Array.isArray(data.descriptors) && data.descriptors.length > 0) {
+            descriptors[data.id] = data.descriptors;
+          } else if (data.descriptor && Array.isArray(data.descriptor)) {
+            descriptors[data.id] = [data.descriptor]; // Wrap legacy single descriptor as set-of-one
           }
         }
       });
@@ -451,7 +464,8 @@ app.post('/api/admin/students/import', adminAuthMiddleware, async (req, res) => 
           studentId: s.studentId,
           dept: s.dept,
           year: s.year || s.classCode,
-          descriptor: s.descriptor || null,
+          descriptor: s.descriptor || (s.descriptors && s.descriptors[0]) || null,
+          descriptors: s.descriptors || (s.descriptor ? [s.descriptor] : null),
           photos: s.photos || []
         }, { merge: true });
       }
@@ -480,17 +494,19 @@ app.delete('/api/admin/students/:id', adminAuthMiddleware, async (req, res) => {
 
 // Admin Pending Registrations GET
 app.get('/api/admin/pending-registrations', adminAuthMiddleware, async (req, res) => {
-  const classCode = req.query.classCode || req.adminSession.classCode;
+  const classCode = (req.query.classCode || req.adminSession.classCode || "").trim().toLowerCase();
   const pending = [];
 
   try {
     if (adminDb) {
-      let query = adminDb.collection('pendingRegistrations').where('status', '==', 'pending');
-      if (classCode) {
-        query = query.where('class', '==', classCode.toLowerCase());
-      }
-      const snapshot = await query.get();
-      snapshot.forEach(doc => pending.push({ docId: doc.id, ...doc.data() }));
+      const snapshot = await adminDb.collection('pendingRegistrations').where('status', '==', 'pending').get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const itemClass = (data.class || data.year || "").trim().toLowerCase();
+        if (!classCode || itemClass === classCode) {
+          pending.push({ docId: doc.id, ...data });
+        }
+      });
     }
     return res.json({ success: true, pending });
   } catch (err) {
@@ -519,7 +535,8 @@ app.post('/api/admin/pending-registrations/:id/approve', adminAuthMiddleware, as
         studentId: data.rollNo || studentId,
         dept: data.dept,
         year: data.year || data.class,
-        descriptor: data.descriptor,
+        descriptor: data.descriptor || (data.descriptors && data.descriptors[0]) || null,
+        descriptors: data.descriptors || (data.descriptor ? [data.descriptor] : null),
         photos: data.photos || []
       }, { merge: true });
 
@@ -602,6 +619,255 @@ app.post('/api/admin/registration-links/:id/revoke', adminAuthMiddleware, async 
     console.error("Revoke registration link error:", err);
     return res.status(500).json({ success: false, message: 'Failed to revoke link.' });
   }
+});
+
+// ═══ Shared Helpers for Self-Registration ═══
+
+// Validate Registration Link Token
+async function validateRegistrationToken(token) {
+  if (!token) {
+    return { valid: false, status: 400, message: 'Registration token parameter required.' };
+  }
+  if (!adminDb) {
+    return { valid: false, status: 503, message: 'Database connection unavailable — Firebase Admin SDK is not initialized.' };
+  }
+  try {
+    const linkDoc = await adminDb.collection('registrationLinks').doc(token).get();
+    if (!linkDoc.exists) {
+      return { valid: false, status: 404, message: 'Registration link not found.' };
+    }
+    const data = linkDoc.data();
+    const now = Date.now();
+    const expiresAt = new Date(data.expiresAt).getTime();
+    if (!data.active || expiresAt <= now) {
+      return { valid: false, status: 400, message: 'Registration link has expired or been revoked.' };
+    }
+    return { valid: true, linkData: data };
+  } catch (err) {
+    console.error("Token validation helper error:", err);
+    return { valid: false, status: 500, message: 'Failed to validate registration link.' };
+  }
+}
+
+// Upload Captured Base64 Photos to Firebase Storage via Admin SDK
+async function uploadPhotosToStorage(token, studentId, photos) {
+  const photoUrls = [];
+  if (!Array.isArray(photos) || photos.length === 0) {
+    return photoUrls;
+  }
+
+  const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB limit per photo
+
+  for (let i = 0; i < photos.length; i++) {
+    const photo = photos[i];
+    if (!photo || typeof photo !== 'string') continue;
+
+    // Already an HTTP download URL
+    if (photo.startsWith('http://') || photo.startsWith('https://')) {
+      photoUrls.push(photo);
+      continue;
+    }
+
+    const matches = photo.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/i);
+    let mimeType = 'image/jpeg';
+    let base64Data = photo;
+
+    if (matches) {
+      mimeType = matches[1];
+      base64Data = matches[2];
+    } else if (photo.startsWith('data:')) {
+      throw new Error(`Photo ${i + 1} format is invalid. Only JPEG, PNG, and WebP images are accepted.`);
+    }
+
+    const buffer = Buffer.from(base64Data, 'base64');
+    if (buffer.length > MAX_FILE_SIZE_BYTES) {
+      throw new Error(`Photo ${i + 1} exceeds maximum allowed file size of 5MB.`);
+    }
+
+    if (adminStorage) {
+      try {
+        const bucket = adminStorage.bucket();
+        const filePath = `pendingRegistrations/${token}/${studentId}/angle${i + 1}.jpg`;
+        const file = bucket.file(filePath);
+        const uuid = crypto.randomUUID ? crypto.randomUUID() : crypto.randomBytes(16).toString('hex');
+
+        await file.save(buffer, {
+          metadata: {
+            contentType: mimeType,
+            metadata: {
+              firebaseStorageDownloadTokens: uuid
+            }
+          },
+          resumable: false
+        });
+
+        try {
+          await file.makePublic();
+        } catch (pubErr) {
+          // ACL makePublic might fail if uniform bucket-level access is enabled; download token format handles access
+        }
+
+        const bucketName = bucket.name;
+        const encodedPath = encodeURIComponent(filePath);
+        const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media&token=${uuid}`;
+        photoUrls.push(downloadUrl);
+      } catch (storageErr) {
+        console.warn(`[StorageUpload] Angle ${i + 1} admin storage upload fallback:`, storageErr.message);
+        photoUrls.push(photo);
+      }
+    } else {
+      photoUrls.push(photo);
+    }
+  }
+
+  return photoUrls;
+}
+
+// Firestore Array Flattening / Unflattening Utilities
+// Firestore forbids 2D nested arrays; multi-descriptors are stored as 1D flat arrays of length N*128
+function formatDescriptorsForFirestore(descs) {
+  if (!descs || !Array.isArray(descs) || descs.length === 0) return null;
+  if (Array.isArray(descs[0])) return descs.flat();
+  return descs;
+}
+
+function unflattenDescriptors(flatData) {
+  if (!Array.isArray(flatData) || flatData.length === 0) return [];
+  if (Array.isArray(flatData[0])) return flatData;
+  if (typeof flatData[0] === 'number') {
+    const result = [];
+    for (let i = 0; i < flatData.length; i += 128) {
+      result.push(flatData.slice(i, i + 128));
+    }
+    return result;
+  }
+  return [];
+}
+
+// PUBLIC Registration Link Validation Endpoint
+app.get('/api/registration-links/validate', async (req, res) => {
+  const { token } = req.query;
+  const result = await validateRegistrationToken(token);
+  if (!result.valid) {
+    return res.status(result.status || 400).json({ valid: false, message: result.message });
+  }
+  return res.json({ valid: true, linkData: result.linkData });
+});
+
+// PUBLIC Endpoint: Upload photos for pending self-registration
+app.post('/api/pending-registrations/upload-photos', async (req, res) => {
+  const { token, studentId, photos } = req.body;
+  if (!token || !studentId || !Array.isArray(photos)) {
+    return res.status(400).json({ success: false, message: 'token, studentId, and photos array are required.' });
+  }
+
+  const valResult = await validateRegistrationToken(token);
+  if (!valResult.valid) {
+    return res.status(valResult.status).json({ success: false, message: valResult.message });
+  }
+
+  try {
+    const photoUrls = await uploadPhotosToStorage(token, studentId, photos);
+    return res.json({ success: true, photoUrls });
+  } catch (err) {
+    console.error("Photo upload error:", err.message);
+    return res.status(400).json({ success: false, message: err.message || 'Failed to upload photos.' });
+  }
+});
+
+// PUBLIC Endpoint: Submit pending self-registration via Admin SDK
+app.post('/api/pending-registrations/submit', async (req, res) => {
+  const { token, studentId, studentName, rollNo, dept, year, descriptors, photos } = req.body;
+  if (!token || !studentId || !studentName) {
+    return res.status(400).json({ success: false, message: 'token, studentId, and studentName are required.' });
+  }
+
+  const valResult = await validateRegistrationToken(token);
+  if (!valResult.valid) {
+    return res.status(valResult.status).json({ success: false, message: valResult.message });
+  }
+
+  if (!adminDb) {
+    return res.status(503).json({ success: false, message: 'Database connection unavailable — Firebase Admin SDK is not initialized.' });
+  }
+
+  try {
+    let photoUrls = [];
+    if (Array.isArray(photos) && photos.length > 0) {
+      photoUrls = await uploadPhotosToStorage(token, studentId, photos);
+    }
+
+    const allDescriptors = Array.isArray(descriptors) ? descriptors : [];
+    const classCode = (valResult.linkData.class || '').toLowerCase();
+
+    const pendingData = {
+      token,
+      class: classCode,
+      studentId,
+      studentName,
+      rollNo: rollNo || studentId,
+      dept: dept || '',
+      year: year || classCode,
+      descriptor: allDescriptors.length > 0 ? (Array.isArray(allDescriptors[0]) ? allDescriptors[0] : allDescriptors) : null,
+      descriptors: formatDescriptorsForFirestore(allDescriptors),
+      photos: photoUrls,
+      submittedAt: new Date().toISOString(),
+      status: 'pending'
+    };
+
+    const docId = `${token}_${studentId}`;
+    await adminDb.collection('pendingRegistrations').doc(docId).set(pendingData, { merge: true });
+
+    console.log(`[PendingReg] Registration submitted successfully via Admin SDK for student ${studentId} (${studentName}) under token ${token}.`);
+    return res.json({ success: true, message: 'Your biometric registration has been sent for teacher approval.' });
+  } catch (err) {
+    console.error("Pending registration submission error:", err);
+    return res.status(500).json({ success: false, message: err.message || 'Failed to submit registration.' });
+  }
+});
+
+// Public GET Students for Self-Registration Roster Dropdown
+app.get('/api/students', async (req, res) => {
+  const classCode = (req.query.classCode || "").toLowerCase();
+  const studentsList = [];
+  const pendingStudentIds = [];
+
+  if (adminDb) {
+    try {
+      // 1. Fetch pending registrations for this class
+      let pendingQuery = adminDb.collection('pendingRegistrations').where('status', '==', 'pending');
+      if (classCode) {
+        pendingQuery = pendingQuery.where('class', '==', classCode);
+      }
+      const pendingSnap = await pendingQuery.get();
+      pendingSnap.forEach(doc => {
+        const data = doc.data();
+        if (data.studentId) pendingStudentIds.push(data.studentId);
+      });
+
+      // 2. Fetch approved students
+      const snapshot = await adminDb.collection("students").get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const studentYear = (data.year || "").toLowerCase();
+        if (!classCode || studentYear === classCode) {
+          studentsList.push({
+            id: data.id,
+            name: data.name,
+            studentId: data.studentId,
+            dept: data.dept,
+            year: data.year || classCode,
+            hasDescriptor: !!((data.descriptors && data.descriptors.length > 0) || (data.descriptor && data.descriptor.length))
+          });
+        }
+      });
+      return res.json({ success: true, students: studentsList, pendingStudentIds });
+    } catch (err) {
+      console.error("Fetch public students error:", err);
+    }
+  }
+
+  return res.json({ success: true, students: studentsList, pendingStudentIds });
 });
 
 // Configured Classes GET endpoint

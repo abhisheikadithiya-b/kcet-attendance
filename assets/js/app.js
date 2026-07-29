@@ -293,7 +293,10 @@ async function syncRegistryFromCloud() {
           localStorage.setItem("customStudentsList", JSON.stringify(data.students));
         }
         if (data.descriptors) {
-          state.descriptors = { ...state.descriptors, ...data.descriptors };
+          // Merge descriptors, handling both legacy single and new multi-descriptor format
+          for (const [did, dval] of Object.entries(data.descriptors)) {
+            state.descriptors[did] = dval;
+          }
           localStorage.setItem("studentFaceDescriptors", JSON.stringify(state.descriptors));
         }
         if (elements.attendanceTable) renderAttendanceTable();
@@ -383,7 +386,6 @@ async function loadFaceModels() {
     setScanStatus("Loading AI models", "Initializing face detection engines...");
     await Promise.all([
       faceapi.nets.ssdMobilenetv1.loadFromUri(CONFIG.faceModelsPath),
-      faceapi.nets.tinyFaceDetector.loadFromUri(CONFIG.faceModelsPath),
       faceapi.nets.faceLandmark68Net.loadFromUri(CONFIG.faceModelsPath),
       faceapi.nets.faceRecognitionNet.loadFromUri(CONFIG.faceModelsPath)
     ]);
@@ -733,10 +735,12 @@ function resizeCanvas() {
 function startFaceDetection() {
   clearInterval(state.detectionTimer);
   state.scanLocked = false;
-  const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 });
+  const options = new faceapi.SsdMobilenetv1Options({ minConfidence: FACE_THRESHOLDS.MIN_CONFIDENCE });
 
+  let _tickTimes = [];
   state.detectionTimer = setInterval(async () => {
     if (!state.cameraActive) return;
+    const _t0 = performance.now();
 
     try {
       resizeCanvas();
@@ -793,7 +797,17 @@ function startFaceDetection() {
       console.error("Face detection loop error:", err);
       if (typeof Sentry !== 'undefined') Sentry.captureException(err);
     }
-  }, 350);
+
+    // Performance telemetry: log avg per-tick time every 20 ticks
+    const _elapsed = performance.now() - _t0;
+    _tickTimes.push(_elapsed);
+    if (_tickTimes.length >= 20) {
+      const avg = _tickTimes.reduce((a, b) => a + b, 0) / _tickTimes.length;
+      const max = Math.max(..._tickTimes);
+      console.log(`[PerfTelemetry] Detection tick avg=${avg.toFixed(1)}ms, max=${max.toFixed(1)}ms over ${_tickTimes.length} ticks (interval=${FACE_THRESHOLDS.DETECTION_INTERVAL_MS}ms)`);
+      _tickTimes = [];
+    }
+  }, FACE_THRESHOLDS.DETECTION_INTERVAL_MS);
 }
 
 function drawFaceBox(ctx, box) {
@@ -812,26 +826,38 @@ function matchStudent(descriptor) {
 
   let best = { id: null, distance: Infinity };
   let secondBest = { id: null, distance: Infinity };
-  entries.forEach(([id, savedDescriptor]) => {
-    const distance = faceapi.euclideanDistance(descriptor, new Float32Array(savedDescriptor));
-    if (distance < best.distance) {
+  entries.forEach(([id, descriptorSet]) => {
+    // Support both legacy single descriptor (flat array of numbers) and
+    // new multi-descriptor format (array of arrays)
+    const isLegacy = descriptorSet && typeof descriptorSet[0] === 'number';
+    const descs = isLegacy ? [descriptorSet] : (descriptorSet || []);
+
+    // Best-of-set: use minimum distance across all stored descriptors
+    let minDist = Infinity;
+    for (const desc of descs) {
+      if (!desc || !desc.length) continue;
+      const dist = faceapi.euclideanDistance(descriptor, new Float32Array(desc));
+      if (dist < minDist) minDist = dist;
+    }
+
+    if (minDist < best.distance) {
       secondBest = { ...best };
-      best = { id, distance };
-    } else if (distance < secondBest.distance) {
-      secondBest = { id, distance };
+      best = { id, distance: minDist };
+    } else if (minDist < secondBest.distance) {
+      secondBest = { id, distance: minDist };
     }
   });
 
   const margin = secondBest.distance - best.distance;
   console.log(`[FaceMatch] Best: ${best.id} (d=${best.distance.toFixed(4)}), Runner-up: ${secondBest.id} (d=${secondBest.distance.toFixed(4)}), Margin: ${margin.toFixed(4)}`);
 
-  if (best.distance >= 0.52) {
+  if (best.distance >= FACE_THRESHOLDS.MATCH_DISTANCE) {
     logMatchAttempt('no match', best.distance, secondBest.distance);
     return null;
   }
 
-  if (entries.length > 1 && margin < 0.08) {
-    console.warn(`[FaceMatch] AMBIGUOUS: margin ${margin.toFixed(4)} < 0.08 threshold. Rejecting match.`);
+  if (entries.length > 1 && margin < FACE_THRESHOLDS.MATCH_MARGIN) {
+    console.warn(`[FaceMatch] AMBIGUOUS: margin ${margin.toFixed(4)} < ${FACE_THRESHOLDS.MATCH_MARGIN} threshold. Rejecting match.`);
     if (typeof Sentry !== 'undefined') Sentry.captureMessage(`Ambiguous face match: best=${best.id} d=${best.distance.toFixed(4)}, runner-up=${secondBest.id} d=${secondBest.distance.toFixed(4)}, margin=${margin.toFixed(4)}`, 'warning');
     logMatchAttempt('ambiguous', best.distance, secondBest.distance);
     return null;
@@ -1158,6 +1184,60 @@ function updateStats() {
   if (elements.attendanceRate) elements.attendanceRate.textContent = `${rate}%`;
 }
 
+// Quality check utilities for admin registration capture
+function computeBlurScoreAdmin(canvas, ctx) {
+  const w = canvas.width;
+  const h = canvas.height;
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const gray = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    gray[i] = 0.299 * imgData.data[i*4] + 0.587 * imgData.data[i*4+1] + 0.114 * imgData.data[i*4+2];
+  }
+  let sum = 0, sumSq = 0, count = 0;
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const lap = -gray[(y-1)*w+x] - gray[y*w+(x-1)] + 4*gray[y*w+x] - gray[y*w+(x+1)] - gray[(y+1)*w+x];
+      sum += lap; sumSq += lap * lap; count++;
+    }
+  }
+  const mean = sum / count;
+  return (sumSq / count) - (mean * mean);
+}
+
+function analyzeFrameQualityAdmin(canvas, ctx, detection) {
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imgData.data;
+  let totalBrightness = 0, sampleCount = 0;
+  for (let i = 0; i < data.length; i += 16) {
+    totalBrightness += 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+    sampleCount++;
+  }
+  const avgBrightness = totalBrightness / sampleCount;
+
+  if (avgBrightness < FACE_THRESHOLDS.BRIGHTNESS_MIN) {
+    return { valid: false, reason: "Too dark \u2014 move to better lighting." };
+  }
+  if (avgBrightness > FACE_THRESHOLDS.BRIGHTNESS_MAX) {
+    return { valid: false, reason: "Too bright \u2014 reduce glare." };
+  }
+
+  const blurScore = computeBlurScoreAdmin(canvas, ctx);
+  if (blurScore < FACE_THRESHOLDS.BLUR_VARIANCE_MIN) {
+    return { valid: false, reason: "Image too blurry \u2014 hold still and try again." };
+  }
+
+  if (detection && detection.detection && detection.detection.box) {
+    const faceRatio = detection.detection.box.width / canvas.width;
+    if (faceRatio < FACE_THRESHOLDS.FACE_RATIO_MIN) {
+      return { valid: false, reason: "Move closer to the camera." };
+    }
+    if (faceRatio > FACE_THRESHOLDS.FACE_RATIO_MAX) {
+      return { valid: false, reason: "Move further back from the camera." };
+    }
+  }
+  return { valid: true, brightness: avgBrightness, blur: blurScore };
+}
+
 async function captureFaceAngle() {
   if (!state.cameraActive) {
     await startCamera();
@@ -1170,60 +1250,102 @@ async function captureFaceAngle() {
     return;
   }
 
+  const capBtn = $("#captureFaceBtn");
+  if (capBtn) capBtn.disabled = true;
+
   const canvas = document.createElement("canvas");
-  canvas.width = regVideo.videoWidth || 640;
-  canvas.height = regVideo.videoHeight || 480;
+  canvas.width = regVideo.videoWidth || 1280;
+  canvas.height = regVideo.videoHeight || 720;
   const ctx = canvas.getContext("2d");
-  ctx.drawImage(regVideo, 0, 0, canvas.width, canvas.height);
-  const snapshot = canvas.toDataURL("image/jpeg");
 
-  // Immediately run face detection on the captured snapshot image
-  const img = document.createElement("img");
-  img.src = snapshot;
-  
-  setScanStatus("Analyzing angle...", "Extracting biometric facial coordinates...");
-  
-  img.onload = async () => {
-    try {
-      const detection = await faceapi.detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }))
-        .withFaceLandmarks()
-        .withFaceDescriptor();
-        
-      if (!detection) {
-        toast("Face Not Found", "Please align your face directly with the camera overlay and recapture.", "warning");
-        setScanStatus("Capture Failed", "Ensure your face is clearly visible inside the box.");
-        return;
+  setScanStatus("Analyzing angle...", "Sampling frames for optimal biometric clarity...");
+
+  let bestDetection = null;
+  let bestSnapshot = null;
+  let bestScore = 0;
+  let lastQualityReason = "";
+
+  for (let attempt = 1; attempt <= FACE_THRESHOLDS.MULTI_FRAME_SAMPLES; attempt++) {
+    ctx.drawImage(regVideo, 0, 0, canvas.width, canvas.height);
+    const snapshot = canvas.toDataURL("image/jpeg", 0.85);
+    const img = document.createElement("img");
+    img.src = snapshot;
+    await new Promise(resolve => img.onload = resolve);
+
+    const detection = await faceapi.detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: FACE_THRESHOLDS.MIN_CONFIDENCE }))
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    if (detection) {
+      const confPct = (detection.detection.score * 100).toFixed(1);
+      const quality = analyzeFrameQualityAdmin(canvas, ctx, detection);
+      console.log(`[AdminCapture] Sample ${attempt}/${FACE_THRESHOLDS.MULTI_FRAME_SAMPLES}: Confidence ${confPct}%, Quality:`, quality);
+
+      if (!quality.valid) {
+        lastQualityReason = quality.reason;
+      } else if (detection.detection.score > bestScore) {
+        bestScore = detection.detection.score;
+        bestDetection = detection;
+        bestSnapshot = snapshot;
+        break;
       }
-      
-      state.captureAngles = Math.min(state.captureAngles + 1, 3);
-      if (!state.capturedSnapshots) state.capturedSnapshots = [];
-      state.capturedSnapshots[state.captureAngles - 1] = snapshot;
-      
-      if (!state.currentRegistrationDescriptors) state.currentRegistrationDescriptors = [];
-      state.currentRegistrationDescriptors[state.captureAngles - 1] = Array.from(detection.descriptor);
-
-      const slot = $(`#thumbSlot${state.captureAngles}`);
-      if (slot) {
-        slot.innerHTML = `
-          <span class="thumb-label">Angle ${state.captureAngles}</span>
-          <img src="${snapshot}" alt="Angle ${state.captureAngles}">
-        `;
-      }
-
-      elements.captureCount.textContent = state.captureAngles;
-      $$(".capture-guide li").forEach((item, index) => item.classList.toggle("active", index === state.captureAngles));
-      toast("Capture Successful", `Angle ${state.captureAngles} of 3 recorded.`);
-      setScanStatus("Biometrics extracted", `Angle ${state.captureAngles} ready.`);
-
-      if (state.captureAngles === 3) {
-        $("#captureFaceBtn").classList.add("hidden");
-        $("#approvalControls").classList.remove("hidden");
-      }
-    } catch (err) {
-      console.error("Face detection on snapshot failed:", err);
-      toast("Capture Error", "Failed to extract face template.");
+    } else {
+      console.log(`[AdminCapture] Sample ${attempt}/${FACE_THRESHOLDS.MULTI_FRAME_SAMPLES}: No face detected.`);
     }
-  };
+
+    if (attempt < FACE_THRESHOLDS.MULTI_FRAME_SAMPLES) {
+      await new Promise(res => setTimeout(res, FACE_THRESHOLDS.MULTI_FRAME_DELAY_MS));
+    }
+  }
+
+  if (!bestDetection || !bestSnapshot) {
+    if (capBtn) capBtn.disabled = false;
+    if (lastQualityReason) {
+      toast("Quality Check Failed", lastQualityReason, "warning");
+      setScanStatus("Capture Rejected", lastQualityReason);
+    } else {
+      toast("Face Not Found", "Please align your face directly with the camera overlay and recapture.", "warning");
+      setScanStatus("Capture Failed", "Ensure your face is clearly visible inside the box.");
+    }
+    return;
+  }
+
+  state.captureAngles = Math.min(state.captureAngles + 1, FACE_THRESHOLDS.REQUIRED_CAPTURES);
+  if (!state.capturedSnapshots) state.capturedSnapshots = [];
+  state.capturedSnapshots[state.captureAngles - 1] = bestSnapshot;
+
+  if (!state.currentRegistrationDescriptors) state.currentRegistrationDescriptors = [];
+  state.currentRegistrationDescriptors[state.captureAngles - 1] = Array.from(bestDetection.descriptor);
+
+  const slot = $(`#thumbSlot${state.captureAngles}`);
+  if (slot) {
+    slot.innerHTML = `
+      <span class="thumb-label">Angle ${state.captureAngles}</span>
+      <img src="${bestSnapshot}" alt="Angle ${state.captureAngles}">
+    `;
+  }
+
+  const angleInstructions = [
+    "Angle 1: Look directly at camera",
+    "Angle 2: Turn head slightly LEFT",
+    "Angle 3: Turn head slightly RIGHT",
+    "Angle 4: Tilt chin slightly UPWARD",
+    "Angle 5: Tilt chin slightly DOWNWARD"
+  ];
+
+  elements.captureCount.textContent = state.captureAngles;
+  $$(".capture-guide li").forEach((item, index) => item.classList.toggle("active", index === state.captureAngles));
+  toast("Capture Successful", `Angle ${state.captureAngles} of ${FACE_THRESHOLDS.REQUIRED_CAPTURES} recorded. Confidence: ${(bestScore * 100).toFixed(1)}%`);
+  setScanStatus("Biometrics extracted", `Angle ${state.captureAngles} ready.`);
+
+  if (state.captureAngles >= FACE_THRESHOLDS.REQUIRED_CAPTURES) {
+    $("#captureFaceBtn").classList.add("hidden");
+    $("#approvalControls").classList.remove("hidden");
+  } else {
+    if (capBtn) capBtn.disabled = false;
+    const nextInstruction = angleInstructions[state.captureAngles] || "";
+    if (nextInstruction) setScanStatus("Next angle", nextInstruction);
+  }
 }
 
 function approveCaptures() {
@@ -1238,7 +1360,7 @@ function retryCaptures() {
   state.currentRegistrationDescriptors = [];
   elements.captureCount.textContent = "0";
   
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= FACE_THRESHOLDS.REQUIRED_CAPTURES; i++) {
     const slot = $(`#thumbSlot${i}`);
     if (slot) {
       slot.innerHTML = `
@@ -1298,12 +1420,9 @@ async function saveRegisteredFace() {
 
   const regVideo = $("#regVideo");
   if (state.currentRegistrationDescriptors && state.currentRegistrationDescriptors.length > 0) {
-    const numDescriptors = state.currentRegistrationDescriptors.length;
-    const avgDescriptor = Array.from({ length: 128 }, (_, index) => {
-      const sum = state.currentRegistrationDescriptors.reduce((acc, desc) => acc + desc[index], 0);
-      return sum / numDescriptors;
-    });
-    state.descriptors[id] = avgDescriptor;
+    // Store all individual descriptors as array of arrays (no averaging)
+    const allDescriptors = state.currentRegistrationDescriptors.filter(d => d !== null && d !== undefined);
+    state.descriptors[id] = allDescriptors;
   } else if (!state.descriptors[id]) {
     // No face descriptor captured — warn admin instead of faking one
     console.warn(`[Registration] No face descriptor captured for ${id}. Student will not be matchable until face is registered.`);
@@ -1315,6 +1434,7 @@ async function saveRegisteredFace() {
   const adminToken = sessionStorage.getItem('adminToken');
   if (adminToken) {
     try {
+      const descriptorSet = state.descriptors[id] || null;
       await fetch('/api/admin/students/import', {
         method: 'POST',
         headers: {
@@ -1328,7 +1448,8 @@ async function saveRegisteredFace() {
             studentId,
             dept,
             year,
-            descriptor: state.descriptors[id] || null,
+            descriptor: Array.isArray(descriptorSet) && Array.isArray(descriptorSet[0]) ? descriptorSet[0] : descriptorSet,
+            descriptors: descriptorSet,
             photos: state.capturedSnapshots || []
           }]
         })
@@ -2017,13 +2138,14 @@ async function generateRegistrationLink() {
         },
         body: JSON.stringify({ classCode: adminClass })
       });
-      if (res.ok) {
-        const data = await res.json();
+      const data = await res.json();
+      if (res.ok && data.success && data.linkData) {
         linkData = data.linkData;
+      } else {
+        toast("Database Error", data.message || "Failed to save registration link to cloud database.", "warning");
+        return;
       }
-    }
-
-    if (!linkData) {
+    } else {
       const token = typeof crypto !== 'undefined' && crypto.randomUUID 
         ? crypto.randomUUID() 
         : 'token-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -2087,6 +2209,7 @@ async function revokeRegistrationLink(token) {
   }
 }
 
+
 async function renderActiveLinks() {
   const container = $("#activeLinksContainer");
   if (!container) return;
@@ -2120,7 +2243,8 @@ async function renderActiveLinks() {
 
   container.innerHTML = links.map(l => {
     const shareUrl = `${window.location.origin}/self-register.html?token=${l.token}`;
-    const expires = new Date(l.expiresAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const expDate = new Date(l.expiresAt);
+    const expires = expDate.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ', ' + expDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     return `
       <div style="background: var(--bg); border: 1px solid var(--line); padding: 8px 12px; border-radius: var(--radius-sm); margin-bottom: 8px; font-size: 0.8rem; display: flex; justify-content: space-between; align-items: center;">
         <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 65%;">
@@ -2143,6 +2267,7 @@ async function renderPendingQueue() {
   const adminClass = (sessionStorage.getItem('adminClass') || "").trim().toLowerCase();
   const adminToken = sessionStorage.getItem('adminToken');
   let pendingList = [];
+  let fetchError = null;
 
   if (adminToken) {
     try {
@@ -2152,10 +2277,38 @@ async function renderPendingQueue() {
       if (res.ok) {
         const data = await res.json();
         pendingList = data.pending || [];
+      } else if (res.status === 401) {
+        fetchError = "Admin session expired or invalid. Please log in again.";
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        fetchError = errData.message || "Failed to fetch pending queue from server.";
       }
     } catch (err) {
       console.warn("Fetch pending queue proxy failed:", err);
+      fetchError = "Server connection error.";
     }
+  } else {
+    fetchError = "Admin login required to view pending approval queue.";
+  }
+
+  // Fallback to client-side Firestore if state.db is active and adminToken is missing
+  if (pendingList.length === 0 && state.db && !adminToken) {
+    try {
+      let query = state.db.collection('pendingRegistrations').where('status', '==', 'pending');
+      if (adminClass) {
+        query = query.where('class', '==', adminClass);
+      }
+      const snapshot = await query.get();
+      snapshot.forEach(doc => pendingList.push({ docId: doc.id, ...doc.data() }));
+      if (pendingList.length > 0) fetchError = null;
+    } catch (dbErr) {
+      console.warn("Client-side pending fetch fallback failed:", dbErr);
+    }
+  }
+
+  if (fetchError && pendingList.length === 0) {
+    container.innerHTML = `<div style="text-align: center; padding: 12px;"><p style="font-size: 0.8rem; color: var(--danger); margin-bottom: 6px;">⚠ ${escapeHtml(fetchError)}</p><a href="admin_login.html" class="secondary-btn" style="display: inline-block; padding: 4px 10px; font-size: 0.75rem; text-decoration: none;">Go to Admin Login</a></div>`;
+    return;
   }
 
   if (pendingList.length === 0) {
@@ -2540,17 +2693,19 @@ async function confirmRosterImport() {
     // Sync imported students via Admin Proxy API
     const adminToken = sessionStorage.getItem('adminToken');
     if (adminToken) {
-      try {
-        await fetch('/api/admin/students/import', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${adminToken}`
-          },
-          body: JSON.stringify({ students: validRows })
-        });
-      } catch (importProxyErr) {
-        console.warn("Roster import proxy error:", importProxyErr);
+      const res = await fetch('/api/admin/students/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ students: validRows })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        toast("Database Sync Error", data.message || "Failed to save roster to cloud database.", "warning");
+        if (confirmBtn) confirmBtn.disabled = false;
+        return;
       }
     }
 

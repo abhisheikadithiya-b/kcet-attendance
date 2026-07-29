@@ -126,7 +126,7 @@
               <li>Rotate head slightly right</li>
               <li>Verify visual capture quality</li>
             </ol>
-            <div class="capture-count"><strong id="captureCount">0</strong>/3 angles recorded</div>
+            <div class="capture-count"><strong id="captureCount">0</strong>/5 angles recorded</div>
 
             <!-- Thumbnail slots for snapped views -->
             <div class="captured-angles-preview" id="regThumbsContainer">
@@ -140,6 +140,14 @@
               </div>
               <div class="thumb-slot" id="thumbSlot3">
                 <span class="thumb-label">Angle 3</span>
+                <div class="thumb-placeholder">Awaiting snap</div>
+              </div>
+              <div class="thumb-slot" id="thumbSlot4">
+                <span class="thumb-label">Angle 4</span>
+                <div class="thumb-placeholder">Awaiting snap</div>
+              </div>
+              <div class="thumb-slot" id="thumbSlot5">
+                <span class="thumb-label">Angle 5</span>
                 <div class="thumb-placeholder">Awaiting snap</div>
               </div>
             </div>
@@ -194,7 +202,7 @@
               <button class="secondary-btn" onclick="renderPendingQueue()" type="button" style="padding: 4px 10px; font-size: 0.75rem;">Refresh Queue</button>
             </div>
             <p style="font-size: 0.85rem; color: var(--muted); margin-bottom: 16px;">
-              Review self-submitted 3-angle facial captures from students before activating their profile.
+              Review self-submitted 5-angle facial captures from students before activating their profile.
             </p>
             <div id="pendingQueueContainer" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
               <p style="font-size: 0.8rem; color: var(--muted);">Loading pending submissions...</p>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Self-Registration | KCET Smart Campus</title>
-  <meta name="description" content="Submit 3-angle biometric face capture for teacher approval.">
+  <meta name="description" content="Submit 5-angle biometric face capture for teacher approval.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -124,7 +124,7 @@
         <span>✅</span>
         <div>
           <strong>Submission Received!</strong><br>
-          <small>Your 3-angle facial biometric capture has been submitted to your teacher for approval. Once reviewed, your attendance check-in profile will become active.</small>
+          <small>Your 5-angle facial biometric capture has been submitted to your teacher for approval. Once reviewed, your attendance check-in profile will become active.</small>
         </div>
       </div>
 
@@ -145,44 +145,112 @@
           <div><strong>Department:</strong> <span id="sumDept"></span></div>
         </div>
 
-        <!-- Viewfinder & Camera -->
-        <div class="capture-guide glass" style="margin-bottom: 16px; padding: 16px;">
-          <div class="alignment-helper" id="selfCameraFrame" style="height: 240px;">
-            <video id="selfVideo" autoplay muted playsinline style="width:100%; height:100%; object-fit:cover;"></video>
-            <canvas id="selfOverlayCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%;"></canvas>
-            <div class="face-guide"></div>
-            <div class="camera-placeholder" id="selfCameraPlaceholder">
-              <strong>Webcam Preview</strong>
-              <small>Click "Start Camera" to initialize face capture</small>
+        <!-- Viewfinder & Camera Container -->
+        <div id="selfCameraContainer">
+          <div class="capture-guide glass" style="margin-bottom: 16px; padding: 16px;">
+            <div class="alignment-helper" id="selfCameraFrame" style="height: 240px;">
+              <video id="selfVideo" autoplay muted playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+              <canvas id="selfOverlayCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%;"></canvas>
+              <div class="face-guide"></div>
+              <div class="camera-placeholder" id="selfCameraPlaceholder">
+                <strong>Webcam Preview</strong>
+                <small>Click "Start Camera" to initialize face capture</small>
+              </div>
+            </div>
+
+            <div style="margin-top: 12px; text-align: center;">
+              <span id="selfInstructionText" style="font-weight: 600; font-size: 0.85rem; color: var(--accent);">Angle 1: Look directly at the camera</span>
+            </div>
+
+            <!-- Thumbnails Grid -->
+            <div class="capture-preview-grid">
+              <div class="capture-thumb-box" id="selfThumb1">
+                <span>Angle 1 (Center)</span>
+              </div>
+              <div class="capture-thumb-box" id="selfThumb2">
+                <span>Angle 2 (Left)</span>
+              </div>
+              <div class="capture-thumb-box" id="selfThumb3">
+                <span>Angle 3 (Right)</span>
+              </div>
+              <div class="capture-thumb-box" id="selfThumb4">
+                <span>Angle 4 (Up)</span>
+              </div>
+              <div class="capture-thumb-box" id="selfThumb5">
+                <span>Angle 5 (Down)</span>
+              </div>
             </div>
           </div>
 
-          <div style="margin-top: 12px; text-align: center;">
-            <span id="selfInstructionText" style="font-weight: 600; font-size: 0.85rem; color: var(--accent);">Angle 1: Look directly at the camera</span>
-          </div>
-
-          <!-- Thumbnails Grid -->
-          <div class="capture-preview-grid">
-            <div class="capture-thumb-box" id="selfThumb1">
-              <span>Angle 1 (Center)</span>
-            </div>
-            <div class="capture-thumb-box" id="selfThumb2">
-              <span>Angle 2 (Left)</span>
-            </div>
-            <div class="capture-thumb-box" id="selfThumb3">
-              <span>Angle 3 (Right)</span>
-            </div>
+          <div id="selfCaptureBtnRow" style="display: flex; gap: 10px;">
+            <button class="secondary-btn" id="selfStartCameraBtn" type="button" style="flex: 1;" onclick="startSelfCamera()">Start Camera</button>
+            <button class="primary-btn" id="selfCaptureBtn" type="button" style="flex: 1;" onclick="captureSelfAngle()" disabled>Capture Angle (0/5)</button>
           </div>
         </div>
 
-        <div style="display: flex; gap: 10px;">
-          <button class="secondary-btn" id="selfStartCameraBtn" type="button" style="flex: 1;" onclick="startSelfCamera()">Start Camera</button>
-          <button class="primary-btn" id="selfCaptureBtn" type="button" style="flex: 1;" onclick="captureSelfAngle()" disabled>Capture Angle (0/3)</button>
-        </div>
+        <!-- 5-Angle Photo Review & Approval Screen -->
+        <div id="selfReviewContainer" class="glass" style="display: none; margin-bottom: 16px; padding: 20px; border-radius: var(--radius-sm);">
+          <div style="text-align: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--text);">Review Your Biometric Captures</h3>
+            <p style="margin: 4px 0 0 0; font-size: 0.8rem; color: var(--muted);">Please inspect all 5 photos below. Ensure your face is clear, sharp, and well-lit before submitting.</p>
+          </div>
 
-        <button class="primary-btn" id="selfSubmitBtn" type="button" style="width: 100%; margin-top: 12px; background: var(--accent);" onclick="submitSelfRegistration()" disabled>
-          Submit for Teacher Approval
-        </button>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+            <!-- Center Angle -->
+            <div style="background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px; text-align: center;">
+              <div style="font-weight: 600; font-size: 0.75rem; color: var(--accent); margin-bottom: 6px;">Center</div>
+              <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                <img id="reviewImg0" src="" alt="Center angle" style="width: 100%; height: 100%; object-fit: cover;">
+              </div>
+              <button class="secondary-btn" type="button" onclick="retakeSingleAngle(0)" style="width: 100%; font-size: 0.75rem; padding: 4px;">Retake</button>
+            </div>
+
+            <!-- Left Angle -->
+            <div style="background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px; text-align: center;">
+              <div style="font-weight: 600; font-size: 0.75rem; color: var(--accent); margin-bottom: 6px;">Left</div>
+              <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                <img id="reviewImg1" src="" alt="Left angle" style="width: 100%; height: 100%; object-fit: cover;">
+              </div>
+              <button class="secondary-btn" type="button" onclick="retakeSingleAngle(1)" style="width: 100%; font-size: 0.75rem; padding: 4px;">Retake</button>
+            </div>
+
+            <!-- Right Angle -->
+            <div style="background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px; text-align: center;">
+              <div style="font-weight: 600; font-size: 0.75rem; color: var(--accent); margin-bottom: 6px;">Right</div>
+              <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                <img id="reviewImg2" src="" alt="Right angle" style="width: 100%; height: 100%; object-fit: cover;">
+              </div>
+              <button class="secondary-btn" type="button" onclick="retakeSingleAngle(2)" style="width: 100%; font-size: 0.75rem; padding: 4px;">Retake</button>
+            </div>
+
+            <!-- Up Angle -->
+            <div style="background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px; text-align: center;">
+              <div style="font-weight: 600; font-size: 0.75rem; color: var(--accent); margin-bottom: 6px;">Up</div>
+              <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                <img id="reviewImg3" src="" alt="Up angle" style="width: 100%; height: 100%; object-fit: cover;">
+              </div>
+              <button class="secondary-btn" type="button" onclick="retakeSingleAngle(3)" style="width: 100%; font-size: 0.75rem; padding: 4px;">Retake</button>
+            </div>
+
+            <!-- Down Angle -->
+            <div style="background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px; text-align: center;">
+              <div style="font-weight: 600; font-size: 0.75rem; color: var(--accent); margin-bottom: 6px;">Down</div>
+              <div style="width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                <img id="reviewImg4" src="" alt="Down angle" style="width: 100%; height: 100%; object-fit: cover;">
+              </div>
+              <button class="secondary-btn" type="button" onclick="retakeSingleAngle(4)" style="width: 100%; font-size: 0.75rem; padding: 4px;">Retake</button>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button class="primary-btn" id="selfReviewSubmitBtn" type="button" style="width: 100%; background: #10ac84; font-weight: 700;" onclick="submitSelfRegistration()">
+              Looks Good — Submit for Teacher Approval
+            </button>
+            <button class="secondary-btn" type="button" style="width: 100%;" onclick="resetAllSelfCaptures()">
+              Retake All Photos
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -194,33 +262,37 @@
       token: null,
       linkData: null,
       cameraActive: false,
-      capturedSnapshots: [],
-      capturedDescriptors: [],
+      capturedSnapshots: [null, null, null, null, null],
+      capturedDescriptors: [null, null, null, null, null],
+      targetAngleIndex: null,
       students: []
+    };
+
+    // ═══ Tunable Quality-Check Thresholds ═══
+    const SELF_REG_THRESHOLDS = {
+      MIN_CONFIDENCE: 0.30,        // SsdMobilenetv1 detection confidence
+      BRIGHTNESS_MIN: 40,          // Reject if avg luminance < this
+      BRIGHTNESS_MAX: 230,         // Reject if avg luminance > this
+      BLUR_VARIANCE_MIN: 15,       // Reject if Laplacian variance < this (too blurry)
+      FACE_RATIO_MIN: 0.14,        // Reject if face width < 14% of frame (too far)
+      FACE_RATIO_MAX: 0.65,        // Reject if face width > 65% of frame (too close)
+      REQUIRED_CAPTURES: 5,        // Number of angles required
+      MULTI_FRAME_SAMPLES: 4,      // Frames to sample per capture attempt
+      MULTI_FRAME_DELAY_MS: 250    // Delay between frame samples
     };
 
     document.addEventListener("DOMContentLoaded", async () => {
       const urlParams = new URLSearchParams(window.location.search);
       selfState.token = urlParams.get('token');
 
-      // Addition 2: Check Firebase connection on load before proceeding
-      if (!window.firebase || !CONFIG.firebaseConfig || !CONFIG.firebaseConfig.apiKey) {
-        showFirebaseDisconnected();
-        return;
-      }
-
-      try {
-        if (!firebase.apps.length) {
-          firebase.initializeApp(CONFIG.firebaseConfig);
+      if (window.firebase && CONFIG.firebaseConfig && CONFIG.firebaseConfig.apiKey) {
+        try {
+          if (!firebase.apps.length) {
+            firebase.initializeApp(CONFIG.firebaseConfig);
+          }
+        } catch (err) {
+          console.warn("Firebase client initialization warning:", err.message);
         }
-        const db = firebase.firestore();
-        
-        // Addition 2: Perform network connectivity check
-        await db.collection('registrationLinks').limit(1).get();
-      } catch (err) {
-        console.error("Firebase connection check failed:", err);
-        showFirebaseDisconnected();
-        return;
       }
 
       if (!selfState.token) {
@@ -243,27 +315,19 @@
     }
 
     async function validateTokenAndLoadForm() {
-      const db = firebase.firestore();
       try {
-        const linkDoc = await db.collection('registrationLinks').doc(selfState.token).get();
-        if (!linkDoc.exists) {
-          showInvalidLink("This registration link was not found.");
+        const res = await fetch(`/api/registration-links/validate?token=${encodeURIComponent(selfState.token)}`);
+        const result = await res.json();
+        
+        if (!res.ok || !result.valid) {
+          showInvalidLink(result.message || "This registration link is expired, revoked, or invalid.");
           return;
         }
 
-        const data = linkDoc.data();
-        const now = new Date();
-        const expiresAt = new Date(data.expiresAt);
-
-        if (!data.active || expiresAt <= now) {
-          showInvalidLink("This registration link has expired or been revoked by the teacher.");
-          return;
-        }
-
+        const data = result.linkData;
         selfState.linkData = data;
-        document.getElementById('linkClassBadge').textContent = data.class.toUpperCase();
+        document.getElementById('linkClassBadge').textContent = (data.class || "D11").toUpperCase();
 
-        // Fetch students roster for this class
         await loadUnregisteredStudents(data.class);
       } catch (err) {
         console.error("Token validation error:", err);
@@ -272,30 +336,52 @@
     }
 
     async function loadUnregisteredStudents(classCode) {
-      const db = firebase.firestore();
-      
-      // Load all students for class from local list or cloud
-      const allStudents = getLocalStudentsList();
-      const classStudents = allStudents.filter(s => s.year.trim().toLowerCase() === classCode.toLowerCase());
+      let pendingStudentIds = [];
+      try {
+        if (window.firebase && firebase.apps.length) {
+          const db = firebase.firestore();
+          const pendingSnapshot = await db.collection('pendingRegistrations')
+            .where('class', '==', classCode.toLowerCase())
+            .get();
+          
+          pendingSnapshot.forEach(doc => {
+            if (doc.data().studentId) pendingStudentIds.push(doc.data().studentId);
+          });
+        }
+      } catch (dbErr) {
+        console.warn("Client-side pendingRegistrations check skipped:", dbErr.message);
+      }
 
-      // Fetch pending registrations for this class to filter them out
-      const pendingSnapshot = await db.collection('pendingRegistrations')
-        .where('class', '==', classCode.toLowerCase())
-        .get();
-      
-      const pendingStudentIds = [];
-      pendingSnapshot.forEach(doc => {
-        pendingStudentIds.push(doc.data().studentId);
-      });
+      let classStudents = [];
+      try {
+        const res = await fetch(`/api/students?classCode=${encodeURIComponent(classCode)}`);
+        const data = await res.json();
+        if (res.ok && data.success && Array.isArray(data.students) && data.students.length > 0) {
+          classStudents = data.students;
+        }
+        if (data && Array.isArray(data.pendingStudentIds)) {
+          data.pendingStudentIds.forEach(pid => {
+            if (!pendingStudentIds.includes(pid)) pendingStudentIds.push(pid);
+          });
+        }
+      } catch (apiErr) {
+        console.warn("Server API students fetch skipped/failed:", apiErr.message);
+      }
 
-      // Filter out students who ALREADY have face descriptors OR have pending registrations
+      if (classStudents.length === 0) {
+        const allLocal = typeof getLocalStudentsList === 'function' ? getLocalStudentsList() : [];
+        classStudents = allLocal.filter(s => s && s.year && (s.year || "").toString().trim().toLowerCase() === classCode.toLowerCase());
+      }
+
       const unregistered = classStudents.filter(s => {
-        const hasDescriptor = !!state.descriptors[s.id];
+        if (!s) return false;
+        const hasDescriptor = s.hasDescriptor || (typeof state !== 'undefined' && state.descriptors && !!state.descriptors[s.id]);
         const isPending = pendingStudentIds.includes(s.id);
         return !hasDescriptor && !isPending;
       });
 
       const select = document.getElementById('selfStudentSelect');
+      if (!select) return;
       select.innerHTML = '';
 
       if (unregistered.length === 0) {
@@ -304,6 +390,7 @@
         return;
       }
 
+      select.disabled = false;
       select.innerHTML = '<option value="">-- Choose your name --</option>' + 
         unregistered.map(s => `<option value="${s.id}">${escapeHtml(s.name)} (${s.studentId})</option>`).join('');
 
@@ -329,7 +416,10 @@
     async function startSelfCamera() {
       try {
         const video = document.getElementById('selfVideo');
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+          audio: false
+        });
         video.srcObject = stream;
         document.getElementById('selfCameraPlaceholder').style.display = 'none';
         selfState.cameraActive = true;
@@ -340,133 +430,287 @@
       }
     }
 
+    function computeBlurScore(canvas, ctx) {
+      const w = canvas.width;
+      const h = canvas.height;
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const gray = new Float32Array(w * h);
+      for (let i = 0; i < w * h; i++) {
+        const r = imgData.data[i * 4];
+        const g = imgData.data[i * 4 + 1];
+        const b = imgData.data[i * 4 + 2];
+        gray[i] = 0.299 * r + 0.587 * g + 0.114 * b;
+      }
+      // 3x3 Laplacian kernel: [0,-1,0,-1,4,-1,0,-1,0]
+      let sum = 0;
+      let sumSq = 0;
+      let count = 0;
+      for (let y = 1; y < h - 1; y++) {
+        for (let x = 1; x < w - 1; x++) {
+          const lap = -gray[(y-1)*w+x] - gray[y*w+(x-1)] + 4*gray[y*w+x] - gray[y*w+(x+1)] - gray[(y+1)*w+x];
+          sum += lap;
+          sumSq += lap * lap;
+          count++;
+        }
+      }
+      const mean = sum / count;
+      const variance = (sumSq / count) - (mean * mean);
+      return variance;
+    }
+
+    function analyzeFrameQuality(canvas, ctx, detection) {
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+      let totalBrightness = 0;
+      let sampleCount = 0;
+      for (let i = 0; i < data.length; i += 16) {
+        totalBrightness += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        sampleCount++;
+      }
+      const avgBrightness = totalBrightness / sampleCount;
+
+      if (avgBrightness < SELF_REG_THRESHOLDS.BRIGHTNESS_MIN) {
+        return { valid: false, reason: "Lighting too dark. Move to a brighter area or turn on more lights." };
+      }
+      if (avgBrightness > SELF_REG_THRESHOLDS.BRIGHTNESS_MAX) {
+        return { valid: false, reason: "Lighting too bright. Avoid direct glare behind or in front of camera." };
+      }
+
+      const blurScore = computeBlurScore(canvas, ctx);
+      if (blurScore < SELF_REG_THRESHOLDS.BLUR_VARIANCE_MIN) {
+        return { valid: false, reason: "Image too blurry — hold still and try again." };
+      }
+
+      if (detection && detection.detection && detection.detection.box) {
+        const box = detection.detection.box;
+        const faceRatio = box.width / canvas.width;
+        if (faceRatio < SELF_REG_THRESHOLDS.FACE_RATIO_MIN) {
+          return { valid: false, reason: "Move closer to the camera." };
+        }
+        if (faceRatio > SELF_REG_THRESHOLDS.FACE_RATIO_MAX) {
+          return { valid: false, reason: "Move further back from the camera." };
+        }
+      }
+
+      return { valid: true, brightness: avgBrightness };
+    }
+
     async function captureSelfAngle() {
       if (!selfState.cameraActive) return;
       const video = document.getElementById('selfVideo');
+      const captureBtn = document.getElementById('selfCaptureBtn');
+      captureBtn.disabled = true;
       
       const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
       const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const snapshot = canvas.toDataURL("image/jpeg", 0.85);
 
-      const img = document.createElement("img");
-      img.src = snapshot;
+      toast("Analyzing Face", "Sampling video frames for optimal biometric clarity...");
 
-      toast("Analyzing Face", "Validating facial biometric features...");
+      let bestDetection = null;
+      let bestSnapshot = null;
+      let bestScore = 0;
+      let lastQualityReason = "";
 
-      img.onload = async () => {
-        try {
-          const detection = await faceapi.detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }))
-            .withFaceLandmarks()
-            .withFaceDescriptor();
+      for (let attempt = 1; attempt <= SELF_REG_THRESHOLDS.MULTI_FRAME_SAMPLES; attempt++) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const snapshot = canvas.toDataURL("image/jpeg", 0.85);
 
-          if (!detection) {
-            toast("Face Not Detected", "Align your face clearly inside the oval and try again.", "warning");
-            return;
+        const img = document.createElement("img");
+        img.src = snapshot;
+        await new Promise(resolve => img.onload = resolve);
+
+        const detection = await faceapi.detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: SELF_REG_THRESHOLDS.MIN_CONFIDENCE }))
+          .withFaceLandmarks()
+          .withFaceDescriptor();
+
+        if (detection) {
+          const confPct = (detection.detection.score * 100).toFixed(1);
+          const quality = analyzeFrameQuality(canvas, ctx, detection);
+          console.log(`[SelfCapture] Sample ${attempt}/${SELF_REG_THRESHOLDS.MULTI_FRAME_SAMPLES}: Confidence ${confPct}% (threshold ${SELF_REG_THRESHOLDS.MIN_CONFIDENCE * 100}%), Quality check:`, quality);
+
+          if (!quality.valid) {
+            lastQualityReason = quality.reason;
+          } else if (detection.detection.score > bestScore) {
+            bestScore = detection.detection.score;
+            bestDetection = detection;
+            bestSnapshot = snapshot;
+            break;
           }
-
-          const angleIndex = selfState.capturedSnapshots.length;
-          selfState.capturedSnapshots.push(snapshot);
-          selfState.capturedDescriptors.push(Array.from(detection.descriptor));
-
-          // Update thumbnail
-          const thumbBox = document.getElementById(`selfThumb${angleIndex + 1}`);
-          thumbBox.innerHTML = `<img src="${snapshot}" alt="Angle ${angleIndex + 1}">`;
-
-          const count = selfState.capturedSnapshots.length;
-          document.getElementById('selfCaptureBtn').textContent = `Capture Angle (${count}/3)`;
-
-          const instructions = [
-            "Angle 1: Look directly at camera",
-            "Angle 2: Turn head slightly LEFT",
-            "Angle 3: Turn head slightly RIGHT",
-            "All 3 angles captured! Ready to submit."
-          ];
-          document.getElementById('selfInstructionText').textContent = instructions[count] || instructions[3];
-
-          if (count >= 3) {
-            document.getElementById('selfCaptureBtn').disabled = true;
-            document.getElementById('selfSubmitBtn').disabled = false;
-            toast("Captures Complete", "Click Submit for Teacher Approval.");
-          } else {
-            toast(`Angle ${count} Saved`, instructions[count]);
-          }
-        } catch (err) {
-          console.error("Self capture error:", err);
-          toast("Analysis Failed", "Could not process biometric scan.");
+        } else {
+          console.log(`[SelfCapture] Sample ${attempt}/${SELF_REG_THRESHOLDS.MULTI_FRAME_SAMPLES}: No face detected in frame.`);
         }
-      };
+
+        if (attempt < SELF_REG_THRESHOLDS.MULTI_FRAME_SAMPLES) {
+          await new Promise(res => setTimeout(res, SELF_REG_THRESHOLDS.MULTI_FRAME_DELAY_MS));
+        }
+      }
+
+      if (!bestDetection || !bestSnapshot) {
+        captureBtn.disabled = false;
+        if (lastQualityReason) {
+          toast("Framing Warning", lastQualityReason, "warning");
+        } else {
+          toast("Face Not Detected", "Position your face clearly inside the central guide oval and try again.", "warning");
+        }
+        return;
+      }
+
+      let slotIndex = selfState.targetAngleIndex;
+      if (slotIndex === null || slotIndex === undefined) {
+        slotIndex = selfState.capturedSnapshots.findIndex(s => s === null);
+      }
+      if (slotIndex === -1) slotIndex = 0;
+
+      selfState.capturedSnapshots[slotIndex] = bestSnapshot;
+      selfState.capturedDescriptors[slotIndex] = Array.from(bestDetection.descriptor);
+      selfState.targetAngleIndex = null;
+
+      const thumbBox = document.getElementById(`selfThumb${slotIndex + 1}`);
+      if (thumbBox) {
+        thumbBox.innerHTML = `<img src="${bestSnapshot}" alt="Angle ${slotIndex + 1}">`;
+      }
+
+      const filledCount = selfState.capturedSnapshots.filter(s => s !== null).length;
+      captureBtn.textContent = `Capture Angle (${filledCount}/5)`;
+
+      const angleNames = ["Angle 1 (Center)", "Angle 2 (Left)", "Angle 3 (Right)", "Angle 4 (Up-tilt)", "Angle 5 (Down-tilt)"];
+      toast(`${angleNames[slotIndex]} Saved`, `Confidence: ${(bestScore * 100).toFixed(1)}%`);
+
+      if (filledCount >= SELF_REG_THRESHOLDS.REQUIRED_CAPTURES) {
+        showReviewPanel();
+      } else {
+        captureBtn.disabled = false;
+        const nextSlot = selfState.capturedSnapshots.findIndex(s => s === null);
+        const instructions = [
+          "Angle 1: Look directly at camera",
+          "Angle 2: Turn head slightly LEFT",
+          "Angle 3: Turn head slightly RIGHT",
+          "Angle 4: Tilt chin slightly UPWARD",
+          "Angle 5: Tilt chin slightly DOWNWARD"
+        ];
+        document.getElementById('selfInstructionText').textContent = instructions[nextSlot] || instructions[0];
+      }
+    }
+
+    function showReviewPanel() {
+      document.getElementById('selfCameraContainer').style.display = 'none';
+
+      document.getElementById('reviewImg0').src = selfState.capturedSnapshots[0];
+      document.getElementById('reviewImg1').src = selfState.capturedSnapshots[1];
+      document.getElementById('reviewImg2').src = selfState.capturedSnapshots[2];
+      document.getElementById('reviewImg3').src = selfState.capturedSnapshots[3];
+      document.getElementById('reviewImg4').src = selfState.capturedSnapshots[4];
+
+      document.getElementById('selfReviewContainer').style.display = 'block';
+      toast("Captures Complete", "Inspect all 5 photos before submitting for approval.");
+    }
+
+    function retakeSingleAngle(index) {
+      selfState.capturedSnapshots[index] = null;
+      selfState.capturedDescriptors[index] = null;
+      selfState.targetAngleIndex = index;
+
+      const angleLabels = ["Angle 1 (Center)", "Angle 2 (Left)", "Angle 3 (Right)", "Angle 4 (Up-tilt)", "Angle 5 (Down-tilt)"];
+      const thumbBox = document.getElementById(`selfThumb${index + 1}`);
+      if (thumbBox) {
+        thumbBox.innerHTML = `<span>${angleLabels[index]}</span>`;
+      }
+
+      document.getElementById('selfReviewContainer').style.display = 'none';
+      document.getElementById('selfCameraContainer').style.display = 'block';
+
+      const captureBtn = document.getElementById('selfCaptureBtn');
+      captureBtn.disabled = false;
+      const filledCount = selfState.capturedSnapshots.filter(s => s !== null).length;
+      captureBtn.textContent = `Capture Angle (${filledCount}/5)`;
+
+      const instructions = [
+        "Retaking Angle 1: Look directly at camera",
+        "Retaking Angle 2: Turn head slightly LEFT",
+        "Retaking Angle 3: Turn head slightly RIGHT",
+        "Retaking Angle 4: Tilt chin slightly UPWARD",
+        "Retaking Angle 5: Tilt chin slightly DOWNWARD"
+      ];
+      document.getElementById('selfInstructionText').textContent = instructions[index];
+      toast("Retake Angle", instructions[index]);
+    }
+
+    function resetAllSelfCaptures() {
+      selfState.capturedSnapshots = [null, null, null, null, null];
+      selfState.capturedDescriptors = [null, null, null, null, null];
+      selfState.targetAngleIndex = null;
+
+      document.getElementById('selfThumb1').innerHTML = '<span>Angle 1 (Center)</span>';
+      document.getElementById('selfThumb2').innerHTML = '<span>Angle 2 (Left)</span>';
+      document.getElementById('selfThumb3').innerHTML = '<span>Angle 3 (Right)</span>';
+      document.getElementById('selfThumb4').innerHTML = '<span>Angle 4 (Up-tilt)</span>';
+      document.getElementById('selfThumb5').innerHTML = '<span>Angle 5 (Down-tilt)</span>';
+
+      document.getElementById('selfReviewContainer').style.display = 'none';
+      document.getElementById('selfCameraContainer').style.display = 'block';
+
+      const captureBtn = document.getElementById('selfCaptureBtn');
+      captureBtn.disabled = false;
+      captureBtn.textContent = 'Capture Angle (0/5)';
+      document.getElementById('selfInstructionText').textContent = 'Angle 1: Look directly at the camera';
+      toast("Reset Complete", "Capture all 5 angles again.");
     }
 
     async function submitSelfRegistration() {
       const studentId = document.getElementById('selfStudentSelect').value;
-      if (!studentId || selfState.capturedDescriptors.length < 3) {
-        toast("Incomplete Form", "Please select your name and capture all 3 angles.");
+      const validDescriptors = selfState.capturedDescriptors.filter(d => d !== null);
+      if (!studentId || validDescriptors.length < SELF_REG_THRESHOLDS.REQUIRED_CAPTURES) {
+        toast("Incomplete Form", "Please select your name and complete all 5 angle captures.");
         return;
       }
 
       const student = selfState.students.find(s => s.id === studentId);
       if (!student) return;
 
-      document.getElementById('selfSubmitBtn').disabled = true;
-      document.getElementById('selfSubmitBtn').textContent = "Uploading & Submitting...";
+      const submitBtn = document.getElementById('selfReviewSubmitBtn') || document.getElementById('selfSubmitBtn');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Uploading & Submitting...";
+      }
 
       try {
-        const db = firebase.firestore();
+        const allDescriptors = selfState.capturedDescriptors.filter(d => d !== null);
 
-        // Addition 1: Upload 3 captured photos to Firebase Storage if active, or store clean download URLs
-        const photoUrls = [];
-        if (window.firebase.storage && firebase.apps.length) {
-          try {
-            const storage = firebase.storage();
-            for (let i = 0; i < selfState.capturedSnapshots.length; i++) {
-              const snap = selfState.capturedSnapshots[i];
-              const ref = storage.ref().child(`pendingRegistrations/${selfState.token}/${studentId}/angle${i+1}.jpg`);
-              await ref.putString(snap, 'data_url');
-              const url = await ref.getDownloadURL();
-              photoUrls.push(url);
-            }
-          } catch (storageErr) {
-            console.warn("Storage upload fallback:", storageErr);
-            // Fallback to inline snapshots if storage unconfigured
-            photoUrls.push(...selfState.capturedSnapshots);
-          }
-        } else {
-          photoUrls.push(...selfState.capturedSnapshots);
+        const res = await fetch('/api/pending-registrations/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            token: selfState.token,
+            studentId: student.id,
+            studentName: student.name,
+            rollNo: student.studentId,
+            dept: student.dept,
+            year: student.year,
+            descriptors: allDescriptors,
+            photos: selfState.capturedSnapshots
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to submit registration to server.');
         }
-
-        // Average descriptors into 128-float vector
-        const numDesc = selfState.capturedDescriptors.length;
-        const avgDescriptor = Array.from({ length: 128 }, (_, idx) => {
-          const sum = selfState.capturedDescriptors.reduce((acc, desc) => acc + desc[idx], 0);
-          return sum / numDesc;
-        });
-
-        // Write document to pendingRegistrations collection
-        await db.collection('pendingRegistrations').add({
-          token: selfState.token,
-          class: selfState.linkData.class.toLowerCase(),
-          studentId: student.id,
-          studentName: student.name,
-          rollNo: student.studentId,
-          dept: student.dept,
-          year: student.year,
-          descriptor: avgDescriptor,
-          photos: photoUrls,
-          submittedAt: new Date().toISOString(),
-          status: 'pending'
-        });
 
         document.getElementById('selfRegFormContainer').style.display = 'none';
         document.getElementById('submittedSuccessCard').style.display = 'flex';
         toast("Submitted", "Your biometric registration has been sent for teacher approval.");
       } catch (err) {
         console.error("Submission error:", err);
-        toast("Submission Failed", "Error saving registration. Please try again.");
-        document.getElementById('selfSubmitBtn').disabled = false;
-        document.getElementById('selfSubmitBtn').textContent = "Submit for Teacher Approval";
+        toast("Submission Failed", err.message || "Error saving registration. Please try again.");
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Looks Good — Submit for Teacher Approval";
+        }
       }
     }
   </script>
