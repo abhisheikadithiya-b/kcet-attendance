@@ -285,10 +285,10 @@ async function initFirebase() {
 }
 
 async function syncRegistryFromCloud() {
-  // Read admin token/class from sessionStorage first, then fallback to localStorage
-  // (localStorage persists across tab-close/reopen; sessionStorage is per-tab only)
+  const isAdminPage = window.location.pathname.includes('register.html');
   let adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
   let adminClass = sessionStorage.getItem('adminClass') || localStorage.getItem('adminClass') || "";
+  let studentClass = sessionStorage.getItem('studentClass') || "";
 
   // Sync to sessionStorage if we recovered from localStorage
   if (adminToken && !sessionStorage.getItem('adminToken')) {
@@ -297,41 +297,47 @@ async function syncRegistryFromCloud() {
     sessionStorage.setItem('isAdmin', 'true');
   }
 
-  if (adminToken) {
-    try {
-      const res = await fetch(`/api/admin/students?classCode=${encodeURIComponent(adminClass)}`, {
-        headers: { 'Authorization': `Bearer ${adminToken}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.students && Array.isArray(data.students)) {
-          localStorage.setItem("customStudentsList", JSON.stringify(data.students));
-        }
-        if (data.descriptors) {
-          // Merge descriptors, handling both legacy single and new multi-descriptor format
-          for (const [did, dval] of Object.entries(data.descriptors)) {
-            state.descriptors[did] = dval;
-          }
-          localStorage.setItem("studentFaceDescriptors", JSON.stringify(state.descriptors));
-        }
-        if (elements.attendanceTable) renderAttendanceTable();
-        updateStats();
-      } else if (res.status === 401) {
-        // Session expired or server restarted — clear stale tokens
-        console.warn('[Admin] Session expired (401). Clearing admin session.');
-        sessionStorage.removeItem('adminToken');
-        sessionStorage.removeItem('isAdmin');
-        localStorage.removeItem('adminToken');
-        if (window.location.pathname.includes('register.html')) {
-          toast("Session Expired", "Your admin session has expired. Please log in again.", "warning");
-          setTimeout(() => { window.location.href = 'admin_login.html'; }, 2500);
-        }
-      } else {
-        console.warn('Admin sync non-ok response:', res.status);
+  // Determine active target class code
+  let targetClass = (isAdminPage ? adminClass : (studentClass || adminClass)).trim().toLowerCase();
+
+  // Use admin endpoint if adminToken exists, otherwise public /api/students endpoint
+  let fetchUrl = adminToken 
+    ? `/api/admin/students?classCode=${encodeURIComponent(targetClass)}`
+    : `/api/students?classCode=${encodeURIComponent(targetClass)}`;
+
+  let headers = adminToken ? { 'Authorization': `Bearer ${adminToken}` } : {};
+
+  try {
+    const res = await fetch(fetchUrl, { headers });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.students && Array.isArray(data.students)) {
+        localStorage.setItem("customStudentsList", JSON.stringify(data.students));
       }
-    } catch (err) {
-      console.warn("Admin sync registry proxy error:", err);
+      if (data.descriptors) {
+        // Merge descriptors, handling both legacy single and new multi-descriptor format
+        for (const [did, dval] of Object.entries(data.descriptors)) {
+          state.descriptors[did] = dval;
+        }
+        localStorage.setItem("studentFaceDescriptors", JSON.stringify(state.descriptors));
+      }
+      if (elements.attendanceTable) renderAttendanceTable();
+      updateStats();
+    } else if (res.status === 401 && adminToken) {
+      // Session expired or server restarted — clear stale tokens
+      console.warn('[Admin] Session expired (401). Clearing admin session.');
+      sessionStorage.removeItem('adminToken');
+      sessionStorage.removeItem('isAdmin');
+      localStorage.removeItem('adminToken');
+      if (isAdminPage) {
+        toast("Session Expired", "Your admin session has expired. Please log in again.", "warning");
+        setTimeout(() => { window.location.href = 'admin_login.html'; }, 2500);
+      }
+    } else {
+      console.warn('Sync registry non-ok response:', res.status);
     }
+  } catch (err) {
+    console.warn("Sync registry error:", err);
   }
 
   // Fetch public attendance records for today
@@ -1899,6 +1905,7 @@ function initSplashAndLogin() {
           sessionStorage.setItem('isStudent', 'true');
           sessionStorage.setItem('studentClass', selectedClass);
           
+          await syncRegistryFromCloud();
           renderAttendanceTable();
           updateStats();
 
@@ -1930,7 +1937,6 @@ function initSplashAndLogin() {
 }
 
 window.addEventListener("resize", resizeCanvas);
-
 // Polygon Coordinate / Active configurations helpers
 function getClassesConfig() {
   return state.classesConfig || defaultClassesConfig;

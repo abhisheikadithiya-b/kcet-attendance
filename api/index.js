@@ -467,7 +467,7 @@ app.get('/api/attendance', async (req, res) => {
 
 // Admin GET Students
 app.get('/api/admin/students', adminAuthMiddleware, async (req, res) => {
-  const classCode = req.query.classCode || req.adminSession.classCode;
+  const classCode = (req.query.classCode || req.adminSession.classCode || "").toString().trim().toLowerCase();
   const studentsList = [];
   const descriptors = {};
 
@@ -476,13 +476,14 @@ app.get('/api/admin/students', adminAuthMiddleware, async (req, res) => {
       const snapshot = await adminDb.collection("students").get();
       snapshot.forEach(doc => {
         const data = doc.data();
-        if (!classCode || (data.year && data.year.toLowerCase() === classCode.toLowerCase())) {
+        const sClass = (data.year || data.class || data.classCode || "").toString().trim().toLowerCase();
+        if (!classCode || sClass === classCode) {
           studentsList.push({
             id: data.id,
             name: data.name,
             studentId: data.studentId,
             dept: data.dept,
-            year: data.year,
+            year: data.year || data.class || classCode,
             photos: data.photos || []
           });
           // Support both legacy single descriptor and new multi-descriptor format
@@ -910,10 +911,11 @@ app.post('/api/pending-registrations/submit', async (req, res) => {
   }
 });
 
-// Public GET Students for Self-Registration Roster Dropdown
+// Public GET Students for Self-Registration & Live Check-in
 app.get('/api/students', async (req, res) => {
-  const classCode = (req.query.classCode || "").toLowerCase();
+  const classCode = (req.query.classCode || "").toString().trim().toLowerCase();
   const studentsList = [];
+  const descriptors = {};
   const pendingStudentIds = [];
 
   if (adminDb) {
@@ -933,25 +935,32 @@ app.get('/api/students', async (req, res) => {
       const snapshot = await adminDb.collection("students").get();
       snapshot.forEach(doc => {
         const data = doc.data();
-        const studentYear = (data.year || "").toLowerCase();
-        if (!classCode || studentYear === classCode) {
+        const sClass = (data.year || data.class || data.classCode || "").toString().trim().toLowerCase();
+        if (!classCode || sClass === classCode) {
           studentsList.push({
             id: data.id,
             name: data.name,
             studentId: data.studentId,
             dept: data.dept,
-            year: data.year || classCode,
+            year: data.year || data.class || classCode,
             hasDescriptor: !!((data.descriptors && data.descriptors.length > 0) || (data.descriptor && data.descriptor.length))
           });
+
+          // Include descriptors for face matching on public/student check-in devices
+          if (data.descriptors && Array.isArray(data.descriptors) && data.descriptors.length > 0) {
+            descriptors[data.id] = data.descriptors;
+          } else if (data.descriptor && Array.isArray(data.descriptor)) {
+            descriptors[data.id] = [data.descriptor];
+          }
         }
       });
-      return res.json({ success: true, students: studentsList, pendingStudentIds });
+      return res.json({ success: true, students: studentsList, descriptors, pendingStudentIds });
     } catch (err) {
       console.error("Fetch public students error:", err);
     }
   }
 
-  return res.json({ success: true, students: studentsList, pendingStudentIds });
+  return res.json({ success: true, students: studentsList, descriptors, pendingStudentIds });
 });
 
 // Configured Classes GET endpoint
