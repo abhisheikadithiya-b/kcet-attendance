@@ -24,14 +24,28 @@
     crossorigin="anonymous"
   ></script>
   <script>
-    // Admin route protection
-    if (sessionStorage.getItem('isAdmin') !== 'true') {
-      window.location.replace('admin_login.html');
-    }
+    // Admin route protection — check sessionStorage first, fall back to localStorage
+    (function() {
+      const sessionAdmin = sessionStorage.getItem('isAdmin') === 'true';
+      const localToken = localStorage.getItem('adminToken');
+      const localClass = localStorage.getItem('adminClass') || '';
+
+      if (!sessionAdmin && localToken) {
+        // Restore session from localStorage (tab was closed/re-opened, or user is on same device)
+        sessionStorage.setItem('isAdmin', 'true');
+        sessionStorage.setItem('adminToken', localToken);
+        sessionStorage.setItem('adminClass', localClass);
+      } else if (!sessionAdmin && !localToken) {
+        window.location.replace('admin_login.html');
+      }
+    })();
     
     function logoutAdmin() {
       sessionStorage.removeItem('isAdmin');
       sessionStorage.removeItem('adminClass');
+      sessionStorage.removeItem('adminToken');
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminClass');
       window.location.href = 'index.html';
     }
 

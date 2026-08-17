@@ -110,7 +110,13 @@
         if (res.ok && data.success) {
           sessionStorage.setItem('isAdmin', 'true');
           sessionStorage.setItem('adminClass', cls);
-          if (data.adminToken) sessionStorage.setItem('adminToken', data.adminToken);
+          // Also persist to localStorage so session survives tab close/reopen
+          // The token still expires server-side after 12 hours
+          if (data.adminToken) {
+            sessionStorage.setItem('adminToken', data.adminToken);
+            localStorage.setItem('adminToken', data.adminToken);
+            localStorage.setItem('adminClass', cls);
+          }
           window.location.href = 'register.html';
         } else {
           document.getElementById('loginError').textContent = data.message || 'Incorrect password. Please try again.';

@@ -446,6 +446,35 @@ app.get('/api/admin/students', adminAuthMiddleware, async (req, res) => {
   }
 });
 
+// Admin GET Single Student by ID
+app.get('/api/admin/students/:id', adminAuthMiddleware, async (req, res) => {
+  const id = req.params.id;
+  try {
+    if (!adminDb) {
+      return res.status(503).json({ success: false, message: 'Database not available.' });
+    }
+    const doc = await adminDb.collection('students').doc(id).get();
+    if (!doc.exists) {
+      return res.status(404).json({ success: false, message: 'Student not found.' });
+    }
+    const data = doc.data();
+    return res.json({
+      success: true,
+      student: {
+        id: data.id,
+        name: data.name,
+        studentId: data.studentId,
+        dept: data.dept,
+        year: data.year,
+        photos: data.photos || []
+      }
+    });
+  } catch (err) {
+    console.error('Admin fetch single student error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to fetch student.' });
+  }
+});
+
 // Admin Import / Create Students
 app.post('/api/admin/students/import', adminAuthMiddleware, async (req, res) => {
   const { students } = req.body;

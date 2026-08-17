@@ -279,12 +279,21 @@ async function initFirebase() {
 }
 
 async function syncRegistryFromCloud() {
-  const adminToken = sessionStorage.getItem('adminToken');
-  const adminClass = sessionStorage.getItem('adminClass') || "";
-  
+  // Read admin token/class from sessionStorage first, then fallback to localStorage
+  // (localStorage persists across tab-close/reopen; sessionStorage is per-tab only)
+  let adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
+  let adminClass = sessionStorage.getItem('adminClass') || localStorage.getItem('adminClass') || "";
+
+  // Sync to sessionStorage if we recovered from localStorage
+  if (adminToken && !sessionStorage.getItem('adminToken')) {
+    sessionStorage.setItem('adminToken', adminToken);
+    sessionStorage.setItem('adminClass', adminClass);
+    sessionStorage.setItem('isAdmin', 'true');
+  }
+
   if (adminToken) {
     try {
-      const res = await fetch(`/api/admin/students?classCode=${adminClass}`, {
+      const res = await fetch(`/api/admin/students?classCode=${encodeURIComponent(adminClass)}`, {
         headers: { 'Authorization': `Bearer ${adminToken}` }
       });
       if (res.ok) {
@@ -301,6 +310,18 @@ async function syncRegistryFromCloud() {
         }
         if (elements.attendanceTable) renderAttendanceTable();
         updateStats();
+      } else if (res.status === 401) {
+        // Session expired or server restarted — clear stale tokens
+        console.warn('[Admin] Session expired (401). Clearing admin session.');
+        sessionStorage.removeItem('adminToken');
+        sessionStorage.removeItem('isAdmin');
+        localStorage.removeItem('adminToken');
+        if (window.location.pathname.includes('register.html')) {
+          toast("Session Expired", "Your admin session has expired. Please log in again.", "warning");
+          setTimeout(() => { window.location.href = 'admin_login.html'; }, 2500);
+        }
+      } else {
+        console.warn('Admin sync non-ok response:', res.status);
       }
     } catch (err) {
       console.warn("Admin sync registry proxy error:", err);
@@ -1063,7 +1084,7 @@ function renderAttendanceTable() {
   
   const isAdminPage = window.location.pathname.includes('register.html');
   const activeClass = (isAdminPage 
-    ? sessionStorage.getItem('adminClass') 
+    ? sessionStorage.getItem('adminClass') || localStorage.getItem('adminClass')
     : sessionStorage.getItem('studentClass')) || "";
   const cleanedClass = activeClass.trim().toLowerCase();
 
@@ -1155,7 +1176,7 @@ function updateStats() {
   
   const isAdminPage = window.location.pathname.includes('register.html');
   const activeClass = (isAdminPage 
-    ? sessionStorage.getItem('adminClass') 
+    ? sessionStorage.getItem('adminClass') || localStorage.getItem('adminClass')
     : sessionStorage.getItem('studentClass')) || "";
   const cleanedClass = activeClass.trim().toLowerCase();
 
@@ -1431,7 +1452,7 @@ async function saveRegisteredFace() {
 
   localStorage.setItem("studentFaceDescriptors", JSON.stringify(state.descriptors));
   
-  const adminToken = sessionStorage.getItem('adminToken');
+  const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
   if (adminToken) {
     try {
       const descriptorSet = state.descriptors[id] || null;
@@ -1527,7 +1548,7 @@ function exportCsv() {
   const standardHoursPerDay = 6;
   const totalWorkingHours = totalWorkingDays * standardHoursPerDay;
   const list = getLocalStudentsList();
-  const adminClass = (sessionStorage.getItem('adminClass') || "").trim().toLowerCase();
+  const adminClass = (sessionStorage.getItem('adminClass') || localStorage.getItem('adminClass') || "").trim().toLowerCase();
   
   // Filter by admin class
   let classList = list;
@@ -1584,7 +1605,7 @@ function exportTodayCsv() {
   const presentAll = state.attendance[dateKey] || {};
   const list = getLocalStudentsList();
   
-  const adminClass = (sessionStorage.getItem('adminClass') || "").trim().toLowerCase();
+  const adminClass = (sessionStorage.getItem('adminClass') || localStorage.getItem('adminClass') || "").trim().toLowerCase();
   
   // Filter by admin class
   let classList = list;
@@ -1641,7 +1662,7 @@ function exportAbsenteesCsv() {
   const presentAll = state.attendance[dateKey] || {};
   const list = getLocalStudentsList();
   
-  const adminClass = (sessionStorage.getItem('adminClass') || "").trim().toLowerCase();
+  const adminClass = (sessionStorage.getItem('adminClass') || localStorage.getItem('adminClass') || "").trim().toLowerCase();
   
   // Filter by admin class
   let classList = list;
@@ -1913,7 +1934,7 @@ function getActiveConfiguration(silent = false) {
   const configs = getClassesConfig();
   const isAdminPage = window.location.pathname.includes('register.html');
   const activeClass = (isAdminPage 
-    ? sessionStorage.getItem('adminClass') 
+    ? sessionStorage.getItem('adminClass') || localStorage.getItem('adminClass')
     : sessionStorage.getItem('studentClass')) || "";
   const cleaned = activeClass.trim().toLowerCase();
 
@@ -2009,7 +2030,7 @@ window.deleteStudent = function(id) {
       localStorage.setItem("studentFaceDescriptors", JSON.stringify(state.descriptors));
     }
 
-    const adminToken = sessionStorage.getItem('adminToken');
+    const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
     if (adminToken) {
       fetch(`/api/admin/students/${id}`, {
         method: 'DELETE',
@@ -2075,21 +2096,34 @@ window.toggleAfternoonStatus = function(studentId) {
 };
 
 window.viewStudentPhotos = async function(id) {
-  if (!state.db) {
-    toast("Offline Mode", "Please connect Firebase Firestore to view saved face photos.");
+  const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
+  if (!adminToken) {
+    toast("Admin Login Required", "Please log in as admin to view student photos.");
     return;
   }
   toast("Loading Photos", "Retrieving face angle snapshots from cloud...");
   try {
-    const doc = await state.db.collection("students").doc(id).get();
-    if (doc.exists && doc.data().photos && doc.data().photos.length > 0) {
-      const photos = doc.data().photos;
-      showPhotoViewerModal(doc.data().name, photos);
+    // Use the server-side API (works regardless of client-side Firebase SDK state)
+    const res = await fetch(`/api/admin/students/${encodeURIComponent(id)}`, {
+      headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const photos = data.student && data.student.photos ? data.student.photos : [];
+      if (photos.length > 0) {
+        showPhotoViewerModal(data.student.name || 'Student', photos);
+      } else {
+        toast("No Photos", "No facial snapshots exist for this student.");
+      }
+    } else if (res.status === 401) {
+      toast("Session Expired", "Your admin session has expired. Please log in again.");
+      setTimeout(() => { window.location.href = 'admin_login.html'; }, 2000);
     } else {
-      toast("No Photos", "No facial snapshots exist for this student.");
+      toast("Load Failed", "Error fetching photos from server.");
     }
   } catch (err) {
-    toast("Load Failed", "Error fetching photos from database.");
+    console.error('viewStudentPhotos error:', err);
+    toast("Load Failed", "Network error while fetching student photos.");
   }
 };
 
@@ -2117,7 +2151,7 @@ window.closePhotoModal = function() {
 
 // Self-Registration Link & Approval Queue Management
 async function generateRegistrationLink() {
-  const adminClass = (sessionStorage.getItem('adminClass') || "d11").trim().toLowerCase();
+  const adminClass = (sessionStorage.getItem('adminClass') || localStorage.getItem('adminClass') || "d11").trim().toLowerCase();
   const token = typeof crypto !== 'undefined' && crypto.randomUUID 
     ? crypto.randomUUID() 
     : 'token-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
@@ -2125,7 +2159,7 @@ async function generateRegistrationLink() {
   const createdAt = new Date();
   const expiresAt = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000); // 24 Hours
 
-  const adminToken = sessionStorage.getItem('adminToken');
+  const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
 
   try {
     let linkData = null;
@@ -2188,7 +2222,7 @@ function copyLinkUrl(url) {
 }
 
 async function revokeRegistrationLink(token) {
-  const adminToken = sessionStorage.getItem('adminToken');
+  const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
   try {
     if (adminToken) {
       await fetch(`/api/admin/registration-links/${token}/revoke`, {
@@ -2214,7 +2248,7 @@ async function renderActiveLinks() {
   const container = $("#activeLinksContainer");
   if (!container) return;
 
-  const adminClass = (sessionStorage.getItem('adminClass') || "").trim().toLowerCase();
+  const adminClass = (sessionStorage.getItem('adminClass') || localStorage.getItem('adminClass') || "").trim().toLowerCase();
   let links = [];
 
   if (state.db) {
@@ -2264,8 +2298,8 @@ async function renderPendingQueue() {
   const container = $("#pendingQueueContainer");
   if (!container) return;
 
-  const adminClass = (sessionStorage.getItem('adminClass') || "").trim().toLowerCase();
-  const adminToken = sessionStorage.getItem('adminToken');
+  const adminClass = (sessionStorage.getItem('adminClass') || localStorage.getItem('adminClass') || "").trim().toLowerCase();
+  const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
   let pendingList = [];
   let fetchError = null;
 
@@ -2346,7 +2380,7 @@ async function renderPendingQueue() {
 }
 
 async function approvePendingRegistration(pendingId) {
-  const adminToken = sessionStorage.getItem('adminToken');
+  const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
   if (!adminToken) {
     toast("Admin Session Required", "Please log in to approve registrations.");
     return;
@@ -2372,7 +2406,7 @@ async function approvePendingRegistration(pendingId) {
 }
 
 async function rejectPendingRegistration(pendingId) {
-  const adminToken = sessionStorage.getItem('adminToken');
+  const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
   if (!adminToken) {
     toast("Admin Session Required", "Please log in to reject registrations.");
     return;
@@ -2691,7 +2725,7 @@ async function confirmRosterImport() {
     }
 
     // Sync imported students via Admin Proxy API
-    const adminToken = sessionStorage.getItem('adminToken');
+    const adminToken = sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken');
     if (adminToken) {
       const res = await fetch('/api/admin/students/import', {
         method: 'POST',
