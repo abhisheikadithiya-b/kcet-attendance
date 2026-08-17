@@ -163,7 +163,14 @@ async function init() {
   if (window.AOS) AOS.init({ duration: 400, once: true, offset: 40 });
   if (elements.currentDate && elements.currentTime) initClock();
   if (elements.typingText) initTyping();
+
+  // Sync admin student list from cloud FIRST (via server API, no Firebase client SDK needed)
+  // This ensures the table has data before it renders for the first time
+  await syncRegistryFromCloud();
+
+  // Initialize Firebase client SDK in parallel (for client-side Firestore reads if needed)
   initFirebase();
+
   initMap();
   hydrateDescriptors();
   bindEvents();
@@ -272,7 +279,6 @@ async function initFirebase() {
       state.storage = firebase.storage();
     }
     toast("Firebase connected", "Student attendance will sync with Firestore.");
-    await syncRegistryFromCloud();
   } catch (error) {
     toast("Firebase skipped", "Offline local storage mode enabled.");
   }

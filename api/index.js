@@ -305,21 +305,72 @@ try {
   console.warn('[FirebaseAdmin] Initialization skipped/failed:', err.message);
 }
 
-// Active Admin Session Store (In-Memory 12-Hour Tokens)
-const activeAdminSessions = {};
+// ─── Firestore-Backed Admin Sessions ────────────────────────────────────────
+// In-memory cache acts as a fast path within the same warm Vercel instance.
+// Firestore is the source of truth and survives cold starts & multiple instances.
+const adminSessionCache = {};
+
+async function saveAdminSession(token, session) {
+  adminSessionCache[token] = session;
+  if (adminDb) {
+    try {
+      await adminDb.collection('adminSessions').doc(token).set(session);
+    } catch (err) {
+      console.warn('[AdminSession] Firestore write failed (falling back to in-memory):', err.message);
+    }
+  }
+}
+
+async function getAdminSession(token) {
+  // 1. Try in-memory cache first (fast path for warm instances)
+  if (adminSessionCache[token]) {
+    const s = adminSessionCache[token];
+    if (s.expiresAt > Date.now()) return s;
+    delete adminSessionCache[token];
+    return null;
+  }
+  // 2. Fall back to Firestore (handles cold starts and multi-instance deployments)
+  if (adminDb) {
+    try {
+      const doc = await adminDb.collection('adminSessions').doc(token).get();
+      if (doc.exists) {
+        const s = doc.data();
+        if (s.expiresAt > Date.now()) {
+          adminSessionCache[token] = s; // warm the cache
+          return s;
+        }
+        // Expired — clean up Firestore entry
+        doc.ref.delete().catch(() => {});
+      }
+    } catch (err) {
+      console.warn('[AdminSession] Firestore read failed:', err.message);
+    }
+  }
+  return null;
+}
+
+async function deleteAdminSession(token) {
+  delete adminSessionCache[token];
+  if (adminDb) {
+    try {
+      await adminDb.collection('adminSessions').doc(token).delete();
+    } catch (err) {
+      console.warn('[AdminSession] Firestore delete failed:', err.message);
+    }
+  }
+}
 
 // Admin Authentication Middleware
-function adminAuthMiddleware(req, res, next) {
+async function adminAuthMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ success: false, message: 'Admin authentication required.' });
   }
 
   const token = authHeader.split(' ')[1];
-  const session = activeAdminSessions[token];
+  const session = await getAdminSession(token);
 
-  if (!session || session.expiresAt <= Date.now()) {
-    if (session) delete activeAdminSessions[token];
+  if (!session) {
     return res.status(401).json({ success: false, message: 'Admin session expired or invalid. Please log in again.' });
   }
 
@@ -342,11 +393,13 @@ app.post('/api/admin-login', apiRateLimiter, async (req, res) => {
   if (password === expectedAdminPwd || password === "KcetAdminSecurePanel#2026") {
     const adminToken = 'adm_sess_' + crypto.randomBytes(32).toString('hex');
     const expiresAt = Date.now() + 12 * 60 * 60 * 1000;
-    activeAdminSessions[adminToken] = {
+    const sessionData = {
       classCode: code,
       createdAt: Date.now(),
       expiresAt: expiresAt
     };
+
+    await saveAdminSession(adminToken, sessionData);
 
     return res.json({
       success: true,
@@ -360,7 +413,9 @@ app.post('/api/admin-login', apiRateLimiter, async (req, res) => {
 });
 
 // Admin Logout API
-app.post('/api/admin/logout', adminAuthMiddleware, (req, res) => {
+app.post('/api/admin/logout', adminAuthMiddleware, async (req, res) => {
+  await deleteAdminSession(req.adminToken);
+  return res.json({ success: true, message: 'Logged out.' });
 });
 
 // Public Student Live Check-in Endpoint
